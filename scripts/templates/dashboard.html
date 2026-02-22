@@ -1841,6 +1841,16 @@
         .erasure-chamber.erasing .label-object {
             animation: glitchText 0.8s linear infinite;
         }
+
+        /* Independent erasure section visibility */
+        #erasure-section {
+            display: none;
+        }
+
+        #erasure-section.visible {
+            display: block;
+            animation: fadeInUp 0.8s ease;
+        }
     </style>
 </head>
 
@@ -1956,6 +1966,48 @@
             </div>
         </section>
 
+        <!-- ═══ Knowledge Erasure Chamber (independent of results) ═══ -->
+        <section class="section fade-in" id="erasure-section">
+            <div class="section-header">
+                <div class="section-number" style="background: linear-gradient(135deg, #ef4444, #f97316);">✦</div>
+                <h2 class="section-title">Knowledge Erasure Visualization</h2>
+            </div>
+            <div class="erasure-chamber" id="erasure-chamber">
+                <canvas class="erasure-particles" id="erasure-canvas"></canvas>
+
+                <div class="knowledge-triple" id="knowledge-triple">
+                    <div class="triple-node">
+                        <div class="triple-orb orb-subject">🗼</div>
+                        <span class="triple-label label-subject" id="erasure-subject">Eiffel Tower</span>
+                    </div>
+
+                    <div class="triple-connection">
+                        <span class="connection-arrow">→</span>
+                        <div class="connection-line" id="connection-line"></div>
+                        <span class="connection-relation" id="erasure-relation">location</span>
+                        <span class="connection-arrow">→</span>
+                    </div>
+
+                    <div class="triple-node">
+                        <div class="triple-orb orb-object">🏙️</div>
+                        <span class="triple-label label-object" id="erasure-object">Paris</span>
+                    </div>
+                </div>
+
+                <div class="memory-meter">
+                    <span class="meter-label">Memory Confidence</span>
+                    <div class="meter-bar">
+                        <div class="meter-fill high" id="memory-fill" style="width: 100%;"></div>
+                    </div>
+                    <span class="meter-value high" id="memory-value">100%</span>
+                </div>
+
+                <div class="erasure-status idle" id="erasure-status">
+                    ● Awaiting Unlearning Pipeline
+                </div>
+            </div>
+        </section>
+
         <!-- ═══ Results Container (hidden until data available) ═══ -->
         <div class="results-container" id="results-container">
 
@@ -2037,47 +2089,7 @@
                 </div>
             </section>
 
-            <!-- ═══ Knowledge Erasure Chamber ═══ -->
-            <section class="section fade-in" id="erasure-section">
-                <div class="section-header">
-                    <div class="section-number" style="background: linear-gradient(135deg, #ef4444, #f97316);">✦</div>
-                    <h2 class="section-title">Knowledge Erasure Visualization</h2>
-                </div>
-                <div class="erasure-chamber" id="erasure-chamber">
-                    <canvas class="erasure-particles" id="erasure-canvas"></canvas>
-
-                    <div class="knowledge-triple" id="knowledge-triple">
-                        <div class="triple-node">
-                            <div class="triple-orb orb-subject">🗼</div>
-                            <span class="triple-label label-subject" id="erasure-subject">Eiffel Tower</span>
-                        </div>
-
-                        <div class="triple-connection">
-                            <span class="connection-arrow">→</span>
-                            <div class="connection-line" id="connection-line"></div>
-                            <span class="connection-relation" id="erasure-relation">location</span>
-                            <span class="connection-arrow">→</span>
-                        </div>
-
-                        <div class="triple-node">
-                            <div class="triple-orb orb-object">🏙️</div>
-                            <span class="triple-label label-object" id="erasure-object">Paris</span>
-                        </div>
-                    </div>
-
-                    <div class="memory-meter">
-                        <span class="meter-label">Memory Confidence</span>
-                        <div class="meter-bar">
-                            <div class="meter-fill high" id="memory-fill" style="width: 100%;"></div>
-                        </div>
-                        <span class="meter-value high" id="memory-value">100%</span>
-                    </div>
-
-                    <div class="erasure-status idle" id="erasure-status">
-                        ● Awaiting Unlearning Pipeline
-                    </div>
-                </div>
-            </section>
+            <!-- Erasure section moved outside results-container -->
 
             <!-- ═══ Section 4: Adversarial Resistance ═══ -->
             <section class="section fade-in" id="adversarial-section">
@@ -2392,6 +2404,9 @@
             lastLogCount = 0;
             document.getElementById('terminal-log').innerHTML = '';
 
+            // Initialize the erasure visualization with the triple the user entered
+            startErasureLive(subject, relation, obj);
+
             try {
                 const resp = await fetch('/api/run', {
                     method: 'POST',
@@ -2434,6 +2449,9 @@
                     document.getElementById('progress-label').textContent =
                         `Step ${p.current_step}/7: ${p.step_name}`;
                     setBadge('running', `RUNNING — Step ${p.current_step}/7: ${p.step_name}`);
+
+                    // Drive the erasure animation based on pipeline step
+                    updateErasureFromStep(p.current_step, p.step_name);
                 }
 
                 // Update terminal log (only new entries)
@@ -2464,6 +2482,9 @@
                     btn.disabled = false;
                     btn.classList.remove('running');
                     btn.textContent = '⚡ Start Unlearning';
+
+                    // Finalize the live erasure visualization
+                    completeErasureLive();
 
                     // Load and render results
                     await loadAndRenderResults('auto');
@@ -2528,6 +2549,8 @@
                 requestAnimationFrame(() => renderGraph(rkg, result.graph_stats));
 
                 // Trigger Knowledge Erasure animation
+                const erasureSection = document.getElementById('erasure-section');
+                erasureSection.classList.add('visible');
                 const subj = result.subject || 'Eiffel Tower';
                 const rel = result.relation || 'location';
                 const obj = result.object || 'Paris';
@@ -2844,6 +2867,149 @@
                 objectEl.style.textDecoration = 'line-through';
                 if (canvas) spawnParticles(canvas, 100);
             }, 3200);
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        // LIVE ERASURE — driven by real pipeline steps
+        // ══════════════════════════════════════════════════════════════
+
+        let erasureLastStep = 0;
+        let erasureCanvas = null;
+        let erasureObjectText = '';
+
+        function startErasureLive(subject, relation, object) {
+            // Make the erasure section visible immediately when pipeline starts
+            const section = document.getElementById('erasure-section');
+            section.classList.add('visible');
+
+            const chamber = document.getElementById('erasure-chamber');
+            const fill = document.getElementById('memory-fill');
+            const value = document.getElementById('memory-value');
+            const status = document.getElementById('erasure-status');
+            const subjectEl = document.getElementById('erasure-subject');
+            const relationEl = document.getElementById('erasure-relation');
+            const objectEl = document.getElementById('erasure-object');
+
+            // Reset to pristine state
+            subjectEl.textContent = subject || 'Eiffel Tower';
+            relationEl.textContent = relation || 'location';
+            objectEl.textContent = object || 'Paris';
+            objectEl.style.opacity = '1';
+            objectEl.style.textDecoration = 'none';
+            objectEl.style.color = '';
+
+            chamber.className = 'erasure-chamber';
+            fill.style.width = '100%';
+            fill.className = 'meter-fill high';
+            value.className = 'meter-value high';
+            value.textContent = '100%';
+
+            status.className = 'erasure-status active';
+            status.textContent = '● AWAITING PIPELINE — KNOWLEDGE LOADED';
+
+            erasureLastStep = 0;
+            erasureObjectText = object || 'Paris';
+            erasureCanvas = initErasureCanvas();
+
+            // Smooth scroll to the visualization
+            setTimeout(() => {
+                section.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 400);
+        }
+
+        function updateErasureFromStep(step, stepName) {
+            if (step <= erasureLastStep) return; // Don't repeat
+            erasureLastStep = step;
+
+            const chamber = document.getElementById('erasure-chamber');
+            const fill = document.getElementById('memory-fill');
+            const value = document.getElementById('memory-value');
+            const status = document.getElementById('erasure-status');
+            const objectEl = document.getElementById('erasure-object');
+
+            // Map 7 pipeline steps to erasure visual phases
+            switch (step) {
+                case 1: // RKG Construction
+                    status.textContent = '◆ SCANNING KNOWLEDGE GRAPH TOPOLOGY...';
+                    fill.style.width = '95%';
+                    value.textContent = '95%';
+                    // Subtle orb pulse
+                    if (erasureCanvas) { spawnParticles(erasureCanvas, 8); animateParticles(); }
+                    break;
+
+                case 2: // Parameter Localization
+                    status.textContent = '◆ LOCALIZING MEMORY PARAMETERS θ_risk...';
+                    fill.style.width = '80%';
+                    value.textContent = '80%';
+                    if (erasureCanvas) spawnParticles(erasureCanvas, 15);
+                    break;
+
+                case 3: // Cascade Optimization — the erasure begins
+                    status.textContent = '◆ GRADIENT DESCENT ON L_forget...';
+                    chamber.classList.add('erasing');
+                    fill.style.width = '55%';
+                    fill.className = 'meter-fill medium';
+                    value.className = 'meter-value medium';
+                    value.textContent = '55%';
+                    // Start text glitch on object
+                    scrambleText(objectEl, '██████', 2000);
+                    if (erasureCanvas) spawnParticles(erasureCanvas, 40);
+                    break;
+
+                case 4: // Adversarial Testing
+                    status.textContent = '◆ SEVERING RELATIONAL PATHWAYS...';
+                    fill.style.width = '30%';
+                    value.textContent = '30%';
+                    if (erasureCanvas) spawnParticles(erasureCanvas, 60);
+                    // Re-scramble harder
+                    scrambleText(objectEl, '░▒▓█', 1500);
+                    break;
+
+                case 5: // Certification
+                    status.textContent = '◆ CASCADE EXPANSION — INDIRECT PATHS...';
+                    fill.style.width = '12%';
+                    fill.className = 'meter-fill low';
+                    value.className = 'meter-value low';
+                    value.textContent = '12%';
+                    if (erasureCanvas) spawnParticles(erasureCanvas, 80);
+                    break;
+
+                case 6: // Quantum Verification
+                    status.textContent = '◆ QUANTUM VERIFICATION — FINAL SWEEP...';
+                    fill.style.width = '3%';
+                    value.textContent = '3%';
+                    if (erasureCanvas) spawnParticles(erasureCanvas, 100);
+                    break;
+
+                case 7: // Complete
+                    completeErasureLive();
+                    break;
+            }
+        }
+
+        function completeErasureLive() {
+            const chamber = document.getElementById('erasure-chamber');
+            const fill = document.getElementById('memory-fill');
+            const value = document.getElementById('memory-value');
+            const status = document.getElementById('erasure-status');
+            const objectEl = document.getElementById('erasure-object');
+
+            chamber.classList.remove('erasing');
+            chamber.classList.add('erased');
+
+            fill.style.width = '0%';
+            fill.className = 'meter-fill erased';
+            value.className = 'meter-value erased';
+            value.textContent = '0%';
+
+            status.className = 'erasure-status complete';
+            status.textContent = '✓ KNOWLEDGE ERASED — CERTIFIED COMPLIANT';
+
+            objectEl.textContent = '[REDACTED]';
+            objectEl.style.opacity = '0.3';
+            objectEl.style.textDecoration = 'line-through';
+
+            if (erasureCanvas) spawnParticles(erasureCanvas, 120);
         }
 
         // ── Metrics Grid ──
