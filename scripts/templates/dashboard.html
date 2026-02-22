@@ -1409,6 +1409,438 @@
             display: block;
             animation: fadeInUp 0.6s ease;
         }
+
+        /* ══════════════════════════════════════════════════════════════
+           KNOWLEDGE ERASURE CHAMBER
+           ══════════════════════════════════════════════════════════════ */
+
+        .erasure-chamber {
+            position: relative;
+            padding: 40px 32px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(10, 10, 20, 0.95), rgba(15, 10, 30, 0.95));
+            border: 1px solid rgba(168, 85, 247, 0.15);
+            overflow: hidden;
+            min-height: 340px;
+        }
+
+        .erasure-chamber::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 30% 40%, rgba(0, 212, 255, 0.04) 0%, transparent 50%),
+                radial-gradient(circle at 70% 60%, rgba(168, 85, 247, 0.04) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        /* Scanline overlay */
+        .erasure-chamber::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(0, 212, 255, 0.015) 2px,
+                    rgba(0, 212, 255, 0.015) 4px);
+            pointer-events: none;
+            animation: scanlines 8s linear infinite;
+        }
+
+        @keyframes scanlines {
+            0% {
+                transform: translateY(0);
+            }
+
+            100% {
+                transform: translateY(4px);
+            }
+        }
+
+        /* Canvas for particles */
+        .erasure-particles {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Main knowledge triple display */
+        .knowledge-triple {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            padding: 40px 20px 30px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .triple-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            transition: all 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .triple-orb {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            position: relative;
+            transition: all 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .orb-subject {
+            background: radial-gradient(circle at 35% 35%, rgba(0, 212, 255, 0.4), rgba(0, 212, 255, 0.1));
+            border: 2px solid rgba(0, 212, 255, 0.5);
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.2), inset 0 0 20px rgba(0, 212, 255, 0.1);
+        }
+
+        .orb-object {
+            background: radial-gradient(circle at 35% 35%, rgba(168, 85, 247, 0.4), rgba(168, 85, 247, 0.1));
+            border: 2px solid rgba(168, 85, 247, 0.5);
+            box-shadow: 0 0 30px rgba(168, 85, 247, 0.2), inset 0 0 20px rgba(168, 85, 247, 0.1);
+        }
+
+        .orb-subject::after,
+        .orb-object::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            animation: orbPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes orbPulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.15);
+                opacity: 0;
+            }
+        }
+
+        .triple-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            transition: all 1.5s ease;
+        }
+
+        .label-subject {
+            color: var(--cyan);
+        }
+
+        .label-object {
+            color: var(--violet);
+        }
+
+        /* Connection line between nodes */
+        .triple-connection {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 0 20px;
+            position: relative;
+            min-width: 200px;
+        }
+
+        .connection-line {
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--cyan), var(--violet));
+            border-radius: 2px;
+            position: relative;
+            transition: all 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .connection-line::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(90deg, rgba(0, 212, 255, 0.3), rgba(168, 85, 247, 0.3));
+            border-radius: 4px;
+            filter: blur(6px);
+            transition: all 1.5s ease;
+        }
+
+        .connection-relation {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(245, 158, 11, 0.9);
+            background: rgba(245, 158, 11, 0.08);
+            padding: 4px 14px;
+            border-radius: 20px;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            transition: all 1.5s ease;
+        }
+
+        .connection-arrow {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.3);
+            transition: all 1.5s ease;
+        }
+
+        /* Memory confidence meter */
+        .memory-meter {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 24px;
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+            z-index: 2;
+        }
+
+        .meter-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .meter-bar {
+            flex: 1;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .meter-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 2s cubic-bezier(0.4, 0, 0.2, 1), background 1.5s ease;
+            position: relative;
+        }
+
+        .meter-fill.high {
+            background: linear-gradient(90deg, #ef4444, #f97316);
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+        }
+
+        .meter-fill.medium {
+            background: linear-gradient(90deg, #f97316, #eab308);
+            box-shadow: 0 0 12px rgba(249, 115, 22, 0.4);
+        }
+
+        .meter-fill.low {
+            background: linear-gradient(90deg, #22c55e, #10b981);
+            box-shadow: 0 0 12px rgba(34, 197, 94, 0.3);
+        }
+
+        .meter-fill.erased {
+            background: linear-gradient(90deg, #10b981, #06b6d4);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+        }
+
+        .meter-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px;
+            font-weight: 700;
+            min-width: 52px;
+            text-align: right;
+            transition: color 1s ease;
+        }
+
+        .meter-value.high {
+            color: #ef4444;
+        }
+
+        .meter-value.medium {
+            color: #f97316;
+        }
+
+        .meter-value.low {
+            color: #22c55e;
+        }
+
+        .meter-value.erased {
+            color: #10b981;
+        }
+
+        /* Status text below meter */
+        .erasure-status {
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 16px;
+            padding: 8px 20px;
+            border-radius: 8px;
+            transition: all 0.8s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        .erasure-status.active {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            animation: statusPulse 1.5s ease-in-out infinite;
+        }
+
+        .erasure-status.complete {
+            color: #10b981;
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .erasure-status.idle {
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        @keyframes statusPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.15);
+            }
+
+            50% {
+                box-shadow: 0 0 20px 4px rgba(239, 68, 68, 0.1);
+            }
+        }
+
+        /* Erasure animation states */
+        .erasure-chamber.erasing .orb-subject,
+        .erasure-chamber.erasing .orb-object {
+            animation: orbShake 0.3s ease-in-out infinite;
+        }
+
+        @keyframes orbShake {
+
+            0%,
+            100% {
+                transform: translate(0, 0);
+            }
+
+            25% {
+                transform: translate(-2px, 1px);
+            }
+
+            50% {
+                transform: translate(1px, -2px);
+            }
+
+            75% {
+                transform: translate(-1px, 2px);
+            }
+        }
+
+        .erasure-chamber.erased .connection-line {
+            width: 0 !important;
+            opacity: 0;
+        }
+
+        .erasure-chamber.erased .connection-line::before {
+            opacity: 0;
+        }
+
+        .erasure-chamber.erased .connection-relation {
+            opacity: 0;
+            transform: scale(0.5);
+        }
+
+        .erasure-chamber.erased .connection-arrow {
+            opacity: 0;
+        }
+
+        .erasure-chamber.erased .triple-label {
+            opacity: 0.3;
+        }
+
+        .erasure-chamber.erased .orb-subject,
+        .erasure-chamber.erased .orb-object {
+            animation: none;
+        }
+
+        .erasure-chamber.erased .orb-subject {
+            border-color: rgba(0, 212, 255, 0.15);
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.05);
+            background: radial-gradient(circle at 35% 35%, rgba(0, 212, 255, 0.15), rgba(0, 212, 255, 0.03));
+        }
+
+        .erasure-chamber.erased .orb-object {
+            border-color: rgba(168, 85, 247, 0.15);
+            box-shadow: 0 0 10px rgba(168, 85, 247, 0.05);
+            background: radial-gradient(circle at 35% 35%, rgba(168, 85, 247, 0.15), rgba(168, 85, 247, 0.03));
+        }
+
+        /* Glitch text effect */
+        @keyframes glitchText {
+            0% {
+                transform: translate(0);
+            }
+
+            2% {
+                transform: translate(2px, -1px);
+                filter: hue-rotate(90deg);
+            }
+
+            4% {
+                transform: translate(-2px, 1px);
+            }
+
+            6% {
+                transform: translate(0);
+                filter: none;
+            }
+
+            20% {
+                transform: translate(0);
+            }
+
+            22% {
+                transform: translate(-3px, 0);
+                filter: hue-rotate(-40deg);
+            }
+
+            24% {
+                transform: translate(0);
+                filter: none;
+            }
+
+            100% {
+                transform: translate(0);
+            }
+        }
+
+        .glitch-text {
+            animation: glitchText 2s linear infinite;
+        }
+
+        .erasure-chamber.erasing .label-object {
+            animation: glitchText 0.8s linear infinite;
+        }
     </style>
 </head>
 
@@ -1601,6 +2033,48 @@
                         <div class="loading-dot"></div>
                         <div class="loading-dot"></div>
                         <div class="loading-dot"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══ Knowledge Erasure Chamber ═══ -->
+            <section class="section fade-in" id="erasure-section">
+                <div class="section-header">
+                    <div class="section-number" style="background: linear-gradient(135deg, #ef4444, #f97316);">✦</div>
+                    <h2 class="section-title">Knowledge Erasure Visualization</h2>
+                </div>
+                <div class="erasure-chamber" id="erasure-chamber">
+                    <canvas class="erasure-particles" id="erasure-canvas"></canvas>
+
+                    <div class="knowledge-triple" id="knowledge-triple">
+                        <div class="triple-node">
+                            <div class="triple-orb orb-subject">🗼</div>
+                            <span class="triple-label label-subject" id="erasure-subject">Eiffel Tower</span>
+                        </div>
+
+                        <div class="triple-connection">
+                            <span class="connection-arrow">→</span>
+                            <div class="connection-line" id="connection-line"></div>
+                            <span class="connection-relation" id="erasure-relation">location</span>
+                            <span class="connection-arrow">→</span>
+                        </div>
+
+                        <div class="triple-node">
+                            <div class="triple-orb orb-object">🏙️</div>
+                            <span class="triple-label label-object" id="erasure-object">Paris</span>
+                        </div>
+                    </div>
+
+                    <div class="memory-meter">
+                        <span class="meter-label">Memory Confidence</span>
+                        <div class="meter-bar">
+                            <div class="meter-fill high" id="memory-fill" style="width: 100%;"></div>
+                        </div>
+                        <span class="meter-value high" id="memory-value">100%</span>
+                    </div>
+
+                    <div class="erasure-status idle" id="erasure-status">
+                        ● Awaiting Unlearning Pipeline
                     </div>
                 </div>
             </section>
@@ -2052,6 +2526,16 @@
 
                 // Render graph after a frame so container has measured width
                 requestAnimationFrame(() => renderGraph(rkg, result.graph_stats));
+
+                // Trigger Knowledge Erasure animation
+                const subj = result.subject || 'Eiffel Tower';
+                const rel = result.relation || 'location';
+                const obj = result.object || 'Paris';
+                if (source === 'static') {
+                    renderErasureStatic(subj, rel, obj);
+                } else {
+                    runErasureAnimation(subj, rel, obj);
+                }
             } catch (e) {
                 console.error('Failed to load results:', e);
             }
@@ -2094,6 +2578,272 @@
 
         function renderComparison(result) {
             // The comparison table is rendered from static HTML, no dynamic data needed
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        // KNOWLEDGE ERASURE ANIMATION ENGINE
+        // ══════════════════════════════════════════════════════════════
+
+        let erasureAnimationId = null;
+        let erasureParticles = [];
+
+        class ErasureParticle {
+            constructor(canvas, x, y, color) {
+                this.canvas = canvas;
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 4;
+                this.vy = (Math.random() - 0.5) * 4 - 1;
+                this.life = 1.0;
+                this.decay = 0.008 + Math.random() * 0.015;
+                this.size = 2 + Math.random() * 4;
+                this.color = color;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotSpeed = (Math.random() - 0.5) * 0.1;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.02; // slight gravity
+                this.vx *= 0.99;
+                this.life -= this.decay;
+                this.rotation += this.rotSpeed;
+                this.size *= 0.995;
+                return this.life > 0;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.globalAlpha = this.life * 0.8;
+                ctx.fillStyle = this.color;
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 8;
+                // Draw as small fragment (rectangle)
+                ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size * 0.6);
+                ctx.restore();
+            }
+        }
+
+        function initErasureCanvas() {
+            const canvas = document.getElementById('erasure-canvas');
+            if (!canvas) return null;
+            const chamber = document.getElementById('erasure-chamber');
+            canvas.width = chamber.clientWidth;
+            canvas.height = chamber.clientHeight;
+            return canvas;
+        }
+
+        function spawnParticles(canvas, count) {
+            const cx = canvas.width / 2;
+            const cy = canvas.height * 0.35;
+            const colors = ['#00d4ff', '#a855f7', '#f59e0b', '#ef4444', '#ffffff'];
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const dist = Math.random() * 60;
+                const px = cx + Math.cos(angle) * dist;
+                const py = cy + Math.sin(angle) * dist;
+                erasureParticles.push(
+                    new ErasureParticle(canvas, px, py, colors[Math.floor(Math.random() * colors.length)])
+                );
+            }
+        }
+
+        function animateParticles() {
+            const canvas = document.getElementById('erasure-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            erasureParticles = erasureParticles.filter(p => {
+                const alive = p.update();
+                if (alive) p.draw(ctx);
+                return alive;
+            });
+
+            if (erasureParticles.length > 0) {
+                erasureAnimationId = requestAnimationFrame(animateParticles);
+            }
+        }
+
+        function scrambleText(element, finalText, duration) {
+            const chars = '█▓▒░#@$%&*!?<>/\\|{}[]~^';
+            const steps = 20;
+            const interval = duration / steps;
+            let step = 0;
+
+            const timer = setInterval(() => {
+                step++;
+                const progress = step / steps;
+                let result = '';
+                for (let i = 0; i < finalText.length; i++) {
+                    if (Math.random() < progress) {
+                        result += finalText[i];
+                    } else {
+                        result += chars[Math.floor(Math.random() * chars.length)];
+                    }
+                }
+                element.textContent = result;
+                if (step >= steps) {
+                    clearInterval(timer);
+                    element.textContent = finalText;
+                }
+            }, interval);
+        }
+
+        function runErasureAnimation(subject, relation, object) {
+            const chamber = document.getElementById('erasure-chamber');
+            const fill = document.getElementById('memory-fill');
+            const value = document.getElementById('memory-value');
+            const status = document.getElementById('erasure-status');
+            const subjectEl = document.getElementById('erasure-subject');
+            const relationEl = document.getElementById('erasure-relation');
+            const objectEl = document.getElementById('erasure-object');
+
+            // Set the triple text
+            subjectEl.textContent = subject || 'Eiffel Tower';
+            relationEl.textContent = relation || 'location';
+            objectEl.textContent = object || 'Paris';
+
+            // Reset state
+            chamber.className = 'erasure-chamber';
+            fill.style.width = '100%';
+            fill.className = 'meter-fill high';
+            value.className = 'meter-value high';
+            value.textContent = '100%';
+
+            const canvas = initErasureCanvas();
+
+            // Phase 1: Scanning (0-1.5s)
+            status.className = 'erasure-status active';
+            status.textContent = '◆ SCANNING KNOWLEDGE TOPOLOGY...';
+
+            setTimeout(() => {
+                // Phase 2: Localizing (1.5s)
+                status.textContent = '◆ LOCALIZING PARAMETERS θ_risk...';
+                fill.style.width = '85%';
+                value.textContent = '85%';
+            }, 1500);
+
+            setTimeout(() => {
+                // Phase 3: Erasing — start shaking
+                chamber.classList.add('erasing');
+                status.textContent = '◆ GRADIENT DESCENT ON L_forget...';
+                fill.style.width = '60%';
+                fill.className = 'meter-fill medium';
+                value.className = 'meter-value medium';
+                value.textContent = '60%';
+
+                // Start glitching the object text
+                if (canvas) {
+                    spawnParticles(canvas, 30);
+                    animateParticles();
+                }
+            }, 3000);
+
+            setTimeout(() => {
+                // Phase 4: Breaking connection
+                status.textContent = '◆ SEVERING RELATIONAL PATHWAYS...';
+                fill.style.width = '30%';
+                value.textContent = '30%';
+
+                if (canvas) spawnParticles(canvas, 50);
+
+                // Scramble the object text
+                scrambleText(objectEl, '██████', 800);
+            }, 4500);
+
+            setTimeout(() => {
+                // Phase 5: Final dissolution
+                status.textContent = '◆ CASCADE EXPANSION — INDIRECT PATHS...';
+                fill.style.width = '8%';
+                fill.className = 'meter-fill low';
+                value.className = 'meter-value low';
+                value.textContent = '8%';
+
+                if (canvas) spawnParticles(canvas, 80);
+            }, 6000);
+
+            setTimeout(() => {
+                // Phase 6: Complete
+                chamber.classList.remove('erasing');
+                chamber.classList.add('erased');
+
+                fill.style.width = '0%';
+                fill.className = 'meter-fill erased';
+                value.className = 'meter-value erased';
+                value.textContent = '0%';
+
+                status.className = 'erasure-status complete';
+                status.textContent = '✓ KNOWLEDGE ERASED — CERTIFIED COMPLIANT';
+
+                objectEl.textContent = '[REDACTED]';
+                objectEl.style.opacity = '0.3';
+                objectEl.style.textDecoration = 'line-through';
+
+                if (canvas) spawnParticles(canvas, 120);
+            }, 7500);
+        }
+
+        function renderErasureStatic(subject, relation, object) {
+            // Jump straight to "erased" state for static results
+            const chamber = document.getElementById('erasure-chamber');
+            const fill = document.getElementById('memory-fill');
+            const value = document.getElementById('memory-value');
+            const status = document.getElementById('erasure-status');
+            const subjectEl = document.getElementById('erasure-subject');
+            const objectEl = document.getElementById('erasure-object');
+            const relationEl = document.getElementById('erasure-relation');
+
+            subjectEl.textContent = subject || 'Eiffel Tower';
+            relationEl.textContent = relation || 'location';
+
+            // Animate to erased state quickly
+            chamber.className = 'erasure-chamber';
+            fill.style.width = '100%';
+            fill.className = 'meter-fill high';
+            value.className = 'meter-value high';
+            value.textContent = '100%';
+
+            const canvas = initErasureCanvas();
+
+            status.className = 'erasure-status active';
+            status.textContent = '◆ REPLAYING ERASURE SEQUENCE...';
+
+            setTimeout(() => {
+                chamber.classList.add('erasing');
+                fill.style.width = '40%';
+                fill.className = 'meter-fill medium';
+                value.className = 'meter-value medium';
+                value.textContent = '40%';
+                scrambleText(objectEl, '██████', 600);
+                if (canvas) { spawnParticles(canvas, 60); animateParticles(); }
+            }, 800);
+
+            setTimeout(() => {
+                fill.style.width = '5%';
+                fill.className = 'meter-fill low';
+                value.className = 'meter-value low';
+                value.textContent = '5%';
+                if (canvas) spawnParticles(canvas, 80);
+            }, 2000);
+
+            setTimeout(() => {
+                chamber.classList.remove('erasing');
+                chamber.classList.add('erased');
+                fill.style.width = '0%';
+                fill.className = 'meter-fill erased';
+                value.className = 'meter-value erased';
+                value.textContent = '0%';
+                status.className = 'erasure-status complete';
+                status.textContent = '✓ KNOWLEDGE ERASED — CERTIFIED COMPLIANT';
+                objectEl.textContent = '[REDACTED]';
+                objectEl.style.opacity = '0.3';
+                objectEl.style.textDecoration = 'line-through';
+                if (canvas) spawnParticles(canvas, 100);
+            }, 3200);
         }
 
         // ── Metrics Grid ──
