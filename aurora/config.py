@@ -29,6 +29,10 @@ class AuroraConfig(BaseModel):
         default=DeviceType.AUTO,
         description="Compute device. AUTO selects CUDA if available."
     )
+    use_half_precision: bool = Field(
+        default=False,
+        description="Load model in float16 to halve memory. Recommended for 2B+ models on CPU."
+    )
 
     # --- Formal Bounds ---
     alpha: float = Field(

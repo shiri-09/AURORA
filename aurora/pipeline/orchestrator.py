@@ -73,16 +73,19 @@ class AuroraPipeline:
     def load_model(self):
         """Load the model and tokenizer."""
         logger.info(f"Loading model: {self.config.model_name}...")
-        self.tokenizer = AutoTokenizer.from_pretrained(self.config.model_name)
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            self.config.model_name, trust_remote_code=True,
+        )
 
-        # Use float16 on XPU to save shared VRAM
-        if self.device == "xpu":
-            self.model = AutoModelForCausalLM.from_pretrained(
-                self.config.model_name, torch_dtype=torch.float16,
-            )
-        else:
-            self.model = AutoModelForCausalLM.from_pretrained(self.config.model_name)
+        # Determine dtype: half-precision for XPU or when explicitly requested
+        load_kwargs = {"trust_remote_code": True, "low_cpu_mem_usage": True}
+        if self.device == "xpu" or self.config.use_half_precision:
+            load_kwargs["torch_dtype"] = torch.float16
+            logger.info("  Using float16 (half-precision) to reduce memory")
 
+        self.model = AutoModelForCausalLM.from_pretrained(
+            self.config.model_name, **load_kwargs,
+        )
         self.model.to(self.device)
 
         if self.tokenizer.pad_token is None:

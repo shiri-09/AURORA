@@ -61,9 +61,8 @@ state_lock = threading.Lock()
 # ─── Model Registry ──────────────────────────────────────────────────────
 
 MODEL_REGISTRY = {
-    "gpt2":        {"hf_name": "gpt2",              "display": "GPT-2",       "params": "124M"},
-    "gpt2-large":  {"hf_name": "gpt2-large",        "display": "GPT-2 Large", "params": "774M"},
-    "phi-2":       {"hf_name": "microsoft/phi-2",   "display": "Phi-2",       "params": "2.7B"},
+    "gpt2":         {"hf_name": "gpt2",                       "display": "GPT-2",           "params": "124M", "quantize": False},
+    "qwen2.5-0.5b": {"hf_name": "Qwen/Qwen2.5-0.5B-Instruct", "display": "Qwen 2.5 (0.5B)", "params": "0.5B", "quantize": True},
 }
 
 # Global pipeline instance (eagerly loaded)
@@ -199,6 +198,7 @@ def load_pipeline_eagerly(model_key="gpt2"):
         config = AuroraConfig(
             model_name=model_info["hf_name"],
             device=DeviceType.CPU,
+            use_half_precision=model_info.get("quantize", False),
             epsilon=0.3,
             alpha=0.1,
             top_k_params=500,
@@ -539,24 +539,37 @@ def api_chat():
         model.eval()
         tokenizer = _tokenizer_ref
 
-        # GPT-2 is a completion model (not instruction-tuned).
-        # Use the raw prompt directly for natural text completion.
-        inputs = tokenizer(prompt, return_tensors="pt")
+        # Detect instruction-tuned models (Qwen, Gemma, etc.) vs completion models (GPT-2)
+        is_chat_model = hasattr(tokenizer, 'apply_chat_template') and hasattr(tokenizer, 'chat_template') and tokenizer.chat_template is not None
+
+        if is_chat_model:
+            # Instruction-tuned: use chat template
+            messages = [{"role": "user", "content": prompt}]
+            input_text = tokenizer.apply_chat_template(
+                messages, tokenize=False, add_generation_prompt=True,
+            )
+            inputs = tokenizer(input_text, return_tensors="pt")
+        else:
+            # Completion model (GPT-2): use raw prompt
+            input_text = prompt
+            inputs = tokenizer(prompt, return_tensors="pt")
+
+        input_len = inputs["input_ids"].shape[-1]
 
         with torch.no_grad():
             outputs = model.generate(
                 **inputs,
-                max_new_tokens=80,
+                max_new_tokens=120,
                 do_sample=True,
-                temperature=0.2,
+                temperature=0.3,
                 top_p=0.85,
                 repetition_penalty=1.3,
                 pad_token_id=tokenizer.eos_token_id,
             )
 
-        full_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
-        # Extract only the generated continuation after the prompt
-        response = full_text[len(prompt):].strip()
+        # Extract only the newly generated tokens
+        generated_ids = outputs[0][input_len:]
+        response = tokenizer.decode(generated_ids, skip_special_tokens=True).strip()
 
         model_info = MODEL_REGISTRY.get(_current_model_name, MODEL_REGISTRY["gpt2"])
         return jsonify({

@@ -1851,6 +1851,212 @@
             display: block;
             animation: fadeInUp 0.8s ease;
         }
+
+        /* ═══ Knowledge Graph Visualization ═══ */
+        #rkg-section {
+            display: none;
+        }
+
+        #rkg-section.visible {
+            display: block;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .rkg-container {
+            position: relative;
+            background: linear-gradient(135deg, rgba(10, 10, 30, 0.95), rgba(20, 10, 40, 0.95));
+            border: 1px solid rgba(0, 255, 255, 0.15);
+            border-radius: 16px;
+            overflow: hidden;
+            padding: 0;
+        }
+
+        .rkg-canvas {
+            width: 100%;
+            height: 450px;
+            display: block;
+            cursor: grab;
+        }
+
+        .rkg-canvas:active {
+            cursor: grabbing;
+        }
+
+        .rkg-legend {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            padding: 12px 20px;
+            background: rgba(0, 0, 0, 0.4);
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .rkg-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .rkg-legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .rkg-status {
+            text-align: center;
+            padding: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: rgba(0, 255, 255, 0.7);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .rkg-status.severing {
+            color: #ef4444;
+            animation: pulse 1s ease infinite;
+        }
+
+        .rkg-status.complete {
+            color: #22c55e;
+        }
+
+        /* ═══ Terminal Panel ═══ */
+        #terminal-section {
+            display: none;
+        }
+
+        #terminal-section.visible {
+            display: block;
+            animation: fadeInUp 0.6s ease;
+        }
+
+        .terminal-container {
+            background: #0a0a0a;
+            border: 1px solid rgba(0, 255, 0, 0.2);
+            border-radius: 12px;
+            overflow: hidden;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.05);
+        }
+
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            background: rgba(0, 255, 0, 0.06);
+            border-bottom: 1px solid rgba(0, 255, 0, 0.15);
+        }
+
+        .terminal-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .terminal-dot.red {
+            background: #ff5f57;
+        }
+
+        .terminal-dot.yellow {
+            background: #febc2e;
+        }
+
+        .terminal-dot.green {
+            background: #28c840;
+        }
+
+        .terminal-title {
+            flex: 1;
+            text-align: center;
+            color: rgba(0, 255, 0, 0.6);
+            font-size: 0.7rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+        }
+
+        .terminal-body {
+            padding: 16px;
+            max-height: 300px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 255, 0, 0.3) transparent;
+        }
+
+        .terminal-body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .terminal-body::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 0, 0.3);
+            border-radius: 3px;
+        }
+
+        .terminal-line {
+            color: rgba(0, 255, 0, 0.8);
+            font-size: 0.72rem;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .terminal-line.t-step {
+            color: #00ffff;
+            font-weight: bold;
+        }
+
+        .terminal-line.t-done {
+            color: #22c55e;
+            font-weight: bold;
+        }
+
+        .terminal-line.t-error {
+            color: #ef4444;
+        }
+
+        .terminal-line.t-warn {
+            color: #f59e0b;
+        }
+
+        .terminal-line.t-info {
+            color: rgba(0, 255, 0, 0.5);
+        }
+
+        .terminal-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 14px;
+            background: rgba(0, 255, 0, 0.8);
+            animation: blink 1s step-end infinite;
+            vertical-align: middle;
+            margin-left: 4px;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        .terminal-line::before {
+            content: '$ ';
+            color: rgba(0, 255, 0, 0.4);
+        }
+
+        .terminal-line.t-step::before,
+        .terminal-line.t-done::before {
+            content: '▶ ';
+        }
+
+        .terminal-line.t-error::before {
+            content: '✗ ';
+        }
     </style>
 </head>
 
@@ -1872,8 +2078,7 @@
                 <span class="model-selector-label">Select Model</span>
                 <select class="model-selector" id="model-selector" onchange="switchModel(this.value)">
                     <option value="gpt2" selected>GPT-2 (124M)</option>
-                    <option value="gpt2-large">GPT-2 Large (774M)</option>
-                    <option value="phi-2">Phi-2 (2.7B)</option>
+                    <option value="qwen2.5-0.5b">Qwen 2.5 — 0.5B</option>
                 </select>
             </div>
 
@@ -1884,10 +2089,10 @@
                 <div class="chat-panel" id="chat-before-panel">
                     <div class="chat-input-row">
                         <input type="text" class="chat-input" id="chat-before-input"
-                            placeholder="Ask GPT-2 anything... e.g. The Eiffel Tower is located in"
+                            placeholder="Ask the model anything... e.g. Where is the Eiffel Tower located?"
                             onkeydown="if(event.key==='Enter')askModel('before')">
                         <button class="btn-ask" id="btn-ask-before" onclick="askModel('before')">
-                            Ask GPT-2
+                            Ask Model
                         </button>
                     </div>
                     <div class="chat-response" id="chat-before-response">
@@ -2004,6 +2209,30 @@
 
                 <div class="erasure-status idle" id="erasure-status">
                     ● Awaiting Unlearning Pipeline
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ Knowledge Graph Visualization ═══ -->
+        <section class="section fade-in" id="rkg-section">
+            <div class="section-header">
+                <div class="section-number" style="background: linear-gradient(135deg, #4d96ff, #9b59b6);">◎</div>
+                <h2 class="section-title">Relational Knowledge Graph</h2>
+            </div>
+            <div class="rkg-container">
+                <canvas class="rkg-canvas" id="rkg-canvas"></canvas>
+                <div class="rkg-status" id="rkg-status">● AWAITING GRAPH DATA</div>
+                <div class="rkg-legend">
+                    <div class="rkg-legend-item"><span class="rkg-legend-dot" style="background:#FF6B6B;"></span> Entity
+                    </div>
+                    <div class="rkg-legend-item"><span class="rkg-legend-dot" style="background:#FFD93D;"></span> Target
+                        Fact</div>
+                    <div class="rkg-legend-item"><span class="rkg-legend-dot" style="background:#6BCB77;"></span> Prompt
+                    </div>
+                    <div class="rkg-legend-item"><span class="rkg-legend-dot" style="background:#4D96FF;"></span>
+                        Semantic</div>
+                    <div class="rkg-legend-item"><span class="rkg-legend-dot" style="background:#9B59B6;"></span>
+                        Attention</div>
                 </div>
             </div>
         </section>
@@ -2190,6 +2419,27 @@
             </section>
 
         </div> <!-- /results-container -->
+
+        <!-- ═══ Terminal Log Panel ═══ -->
+        <section class="section" id="terminal-section">
+            <div class="section-header">
+                <div class="section-number" style="background: linear-gradient(135deg, #0f0, #0a0);">⌘</div>
+                <h2 class="section-title">Pipeline Terminal</h2>
+            </div>
+            <div class="terminal-container">
+                <div class="terminal-header">
+                    <span class="terminal-dot red"></span>
+                    <span class="terminal-dot yellow"></span>
+                    <span class="terminal-dot green"></span>
+                    <span class="terminal-title">aurora@pipeline — /unlearning</span>
+                </div>
+                <div class="terminal-body" id="terminal-body">
+                    <div class="terminal-line t-info">AURORA v0.1.0 — Certified Machine Unlearning System</div>
+                    <div class="terminal-line t-info">Awaiting pipeline execution...</div>
+                    <span class="terminal-cursor" id="terminal-cursor"></span>
+                </div>
+            </div>
+        </section>
 
         <!-- ═══ Footer ═══ -->
         <footer class="footer">
@@ -2407,6 +2657,12 @@
             // Initialize the erasure visualization with the triple the user entered
             startErasureLive(subject, relation, obj);
 
+            // Initialize the terminal panel and knowledge graph
+            initTerminal();
+            // Show RKG section (graph will load when Step 2 completes)
+            document.getElementById('rkg-section').classList.add('visible');
+            document.getElementById('rkg-status').textContent = '● AWAITING GRAPH CONSTRUCTION...';
+
             try {
                 const resp = await fetch('/api/run', {
                     method: 'POST',
@@ -2452,7 +2708,12 @@
 
                     // Drive the erasure animation based on pipeline step
                     updateErasureFromStep(p.current_step, p.step_name);
+                    // Drive the knowledge graph animation
+                    updateRKGFromStep(p.current_step);
                 }
+
+                // Stream logs to terminal panel
+                feedTerminalLogs(p.logs);
 
                 // Update terminal log (only new entries)
                 const logEl = document.getElementById('terminal-log');
@@ -2545,8 +2806,16 @@
                 renderCertificate(cert);
                 renderQuantum(result.metrics);
 
-                // Render graph after a frame so container has measured width
-                requestAnimationFrame(() => renderGraph(rkg, result.graph_stats));
+                // Render knowledge graph
+                requestAnimationFrame(() => {
+                    if (rkg && rkg.nodes && rkg.nodes.length > 0) {
+                        initRKGGraph(rkg, result.subject || 'Eiffel Tower');
+                        if (source === 'static') {
+                            // Show sanitized final state
+                            updateRKGFromStep(7);
+                        }
+                    }
+                });
 
                 // Trigger Knowledge Erasure animation
                 const erasureSection = document.getElementById('erasure-section');
@@ -3010,6 +3279,341 @@
             objectEl.style.textDecoration = 'line-through';
 
             if (erasureCanvas) spawnParticles(erasureCanvas, 120);
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        // RELATIONAL KNOWLEDGE GRAPH — Force-Directed Visualization
+        // ══════════════════════════════════════════════════════════════
+
+        let rkgNodes = [];
+        let rkgEdges = [];
+        let rkgAnimFrame = null;
+        let rkgSeverStep = 0;  // which pipeline step we're at for severing
+        let rkgTargetFact = null;
+
+        const RKG_COLORS = {
+            entity: '#FF6B6B',
+            fact: '#FFD93D',
+            prompt: '#6BCB77',
+            edge_semantic: 'rgba(77,150,255,0.5)',
+            edge_attention: 'rgba(155,89,182,0.5)',
+            edge_retrieval: 'rgba(255,217,61,0.4)',
+        };
+
+        function initRKGGraph(data, targetFact) {
+            const section = document.getElementById('rkg-section');
+            section.classList.add('visible');
+            rkgTargetFact = targetFact;
+            rkgSeverStep = 0;
+
+            const canvas = document.getElementById('rkg-canvas');
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = 450;
+
+            const W = canvas.width;
+            const H = canvas.height;
+
+            // Parse nodes
+            rkgNodes = (data.nodes || []).map((n, i) => {
+                const angle = (2 * Math.PI * i) / (data.nodes.length || 1);
+                const r = Math.min(W, H) * 0.3;
+                return {
+                    id: n.id,
+                    label: n.label || n.id,
+                    x: W / 2 + r * Math.cos(angle) + (Math.random() - 0.5) * 40,
+                    y: H / 2 + r * Math.sin(angle) + (Math.random() - 0.5) * 40,
+                    vx: 0, vy: 0,
+                    type: n.id.startsWith('entity_') ? 'entity' : n.id.startsWith('fact_') ? 'fact' : 'prompt',
+                    importance: n.attention_importance_score || 0.1,
+                    radius: n.id.startsWith('fact_') ? 18 : n.id.startsWith('entity_') ? 14 : 10,
+                    opacity: 1,
+                    severed: false,
+                };
+            });
+
+            // Parse edges
+            rkgEdges = (data.edges || []).map(e => ({
+                source: e.source,
+                target: e.target,
+                weight: e.weight || 0.5,
+                type: e.type || 'semantic',
+                opacity: 0.6,
+                severed: false,
+                severProgress: 0,
+            }));
+
+            const statusEl = document.getElementById('rkg-status');
+            statusEl.className = 'rkg-status';
+            statusEl.textContent = `● GRAPH LOADED — ${rkgNodes.length} nodes, ${rkgEdges.length} edges`;
+
+            // Start animation
+            if (rkgAnimFrame) cancelAnimationFrame(rkgAnimFrame);
+            animateRKG();
+        }
+
+        function animateRKG() {
+            const canvas = document.getElementById('rkg-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width;
+            const H = canvas.height;
+
+            // Simple force-directed step
+            const damping = 0.92;
+            const repulsion = 3000;
+            const springLen = 120;
+            const springK = 0.005;
+            const centerPull = 0.001;
+
+            // Repulsion between all nodes
+            for (let i = 0; i < rkgNodes.length; i++) {
+                for (let j = i + 1; j < rkgNodes.length; j++) {
+                    const dx = rkgNodes[j].x - rkgNodes[i].x;
+                    const dy = rkgNodes[j].y - rkgNodes[i].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                    const force = repulsion / (dist * dist);
+                    const fx = (dx / dist) * force;
+                    const fy = (dy / dist) * force;
+                    rkgNodes[i].vx -= fx;
+                    rkgNodes[i].vy -= fy;
+                    rkgNodes[j].vx += fx;
+                    rkgNodes[j].vy += fy;
+                }
+            }
+
+            // Spring forces along edges
+            for (const e of rkgEdges) {
+                const sn = rkgNodes.find(n => n.id === e.source);
+                const tn = rkgNodes.find(n => n.id === e.target);
+                if (!sn || !tn) continue;
+                const dx = tn.x - sn.x;
+                const dy = tn.y - sn.y;
+                const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                const disp = dist - springLen;
+                const force = disp * springK;
+                const fx = (dx / dist) * force;
+                const fy = (dy / dist) * force;
+                sn.vx += fx; sn.vy += fy;
+                tn.vx -= fx; tn.vy -= fy;
+            }
+
+            // Center gravity + update positions
+            for (const n of rkgNodes) {
+                n.vx += (W / 2 - n.x) * centerPull;
+                n.vy += (H / 2 - n.y) * centerPull;
+                n.vx *= damping;
+                n.vy *= damping;
+                n.x += n.vx;
+                n.y += n.vy;
+                // Boundary clamp
+                n.x = Math.max(30, Math.min(W - 30, n.x));
+                n.y = Math.max(30, Math.min(H - 30, n.y));
+            }
+
+            // Draw
+            ctx.clearRect(0, 0, W, H);
+
+            // Draw edges
+            for (const e of rkgEdges) {
+                const sn = rkgNodes.find(n => n.id === e.source);
+                const tn = rkgNodes.find(n => n.id === e.target);
+                if (!sn || !tn) continue;
+
+                const color = e.type === 'attention' ? RKG_COLORS.edge_attention
+                    : e.type === 'retrieval' ? RKG_COLORS.edge_retrieval
+                        : RKG_COLORS.edge_semantic;
+
+                ctx.save();
+                ctx.globalAlpha = e.opacity * (1 - e.severProgress);
+
+                if (e.severed && e.severProgress < 1) {
+                    // Severing animation — dashed line breaking apart
+                    ctx.setLineDash([4, 4 + e.severProgress * 20]);
+                    ctx.strokeStyle = '#ef4444';
+                    ctx.lineWidth = 2;
+                } else if (e.severProgress >= 1) {
+                    ctx.restore();
+                    continue; // Fully severed, don't draw
+                } else {
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = Math.max(1, e.weight * 3);
+                }
+
+                ctx.beginPath();
+                ctx.moveTo(sn.x, sn.y);
+                ctx.lineTo(tn.x, tn.y);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // Draw nodes
+            for (const n of rkgNodes) {
+                const color = RKG_COLORS[n.type] || '#999';
+                ctx.save();
+                ctx.globalAlpha = n.opacity;
+
+                // Glow
+                ctx.shadowColor = color;
+                ctx.shadowBlur = n.type === 'fact' ? 20 : 12;
+
+                // Circle
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Border
+                ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                ctx.shadowBlur = 0;
+
+                // Severed overlay
+                if (n.severed) {
+                    ctx.fillStyle = 'rgba(239,68,68,0.4)';
+                    ctx.beginPath();
+                    ctx.arc(n.x, n.y, n.radius + 3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Label
+                let label = n.label;
+                if (label.startsWith('entity_')) label = label.replace('entity_', '');
+                if (label.startsWith('fact_')) label = '⚡ FACT';
+                if (label.startsWith('prompt_')) label = 'P' + label.replace('prompt_', '');
+                if (label.length > 12) label = label.substring(0, 10) + '..';
+
+                ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                ctx.font = '9px JetBrains Mono, monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(label, n.x, n.y + n.radius + 14);
+
+                ctx.restore();
+            }
+
+            rkgAnimFrame = requestAnimationFrame(animateRKG);
+        }
+
+        function updateRKGFromStep(step) {
+            const statusEl = document.getElementById('rkg-status');
+
+            switch (step) {
+                case 1: // Fact formalization
+                    statusEl.textContent = '● TOPOLOGY SCANNED — IDENTIFYING RISK PATHWAYS';
+                    break;
+                case 2: // RKG built — try fetching fresh data
+                    statusEl.textContent = '● RELATIONAL GRAPH CONSTRUCTED';
+                    fetch('/api/rkg').then(r => r.json()).then(data => {
+                        if (data && data.nodes && data.nodes.length > 0) {
+                            initRKGGraph(data, rkgTargetFact);
+                        }
+                    }).catch(() => { });
+                    break;
+                case 3: // Parameter localization — start showing at-risk edges
+                    statusEl.className = 'rkg-status severing';
+                    statusEl.textContent = '⚠ LOCALIZING θ_risk — MARKING RISK EDGES';
+                    // Mark fact-connected edges as at-risk
+                    rkgEdges.forEach(e => {
+                        const sn = rkgNodes.find(n => n.id === e.source);
+                        const tn = rkgNodes.find(n => n.id === e.target);
+                        if ((sn && sn.type === 'fact') || (tn && tn.type === 'fact')) {
+                            e.severed = true;
+                        }
+                    });
+                    break;
+                case 4: // Cascade optimizer — sever edges progressively
+                    statusEl.textContent = '⚠ CASCADE OPTIMIZER — SEVERING PATHWAYS';
+                    rkgEdges.forEach(e => {
+                        if (e.severed) {
+                            e.severProgress = Math.min(e.severProgress + 0.5, 0.8);
+                        }
+                    });
+                    // Start dimming entity nodes
+                    rkgNodes.forEach(n => {
+                        if (n.type === 'entity') {
+                            const connected = rkgEdges.some(e =>
+                                (e.source === n.id || e.target === n.id) && e.severed
+                            );
+                            if (connected) n.opacity = 0.5;
+                        }
+                    });
+                    break;
+                case 5: // Adversarial eval — more severing
+                    statusEl.textContent = '⚠ ADVERSARIAL VERIFICATION — TESTING RESIDUAL PATHS';
+                    rkgEdges.forEach(e => {
+                        if (e.severed) e.severProgress = 1.0; // fully gone
+                        // Sever indirect paths too
+                        const sn = rkgNodes.find(n => n.id === e.source);
+                        const tn = rkgNodes.find(n => n.id === e.target);
+                        if ((sn && sn.type === 'entity') || (tn && tn.type === 'entity')) {
+                            if (!e.severed && Math.random() < 0.3) {
+                                e.severed = true;
+                                e.severProgress = 0.3;
+                            }
+                        }
+                    });
+                    break;
+                case 6: // Quantum verification
+                    statusEl.textContent = '⚠ QUANTUM VERIFICATION — FINAL CHECK';
+                    rkgEdges.forEach(e => {
+                        if (e.severed) e.severProgress = 1.0;
+                    });
+                    rkgNodes.forEach(n => {
+                        if (n.type === 'fact') { n.severed = true; n.opacity = 0.3; }
+                    });
+                    break;
+                case 7: // Done
+                    statusEl.className = 'rkg-status complete';
+                    statusEl.textContent = '✓ GRAPH SANITIZED — ALL RISK PATHWAYS SEVERED';
+                    rkgEdges.forEach(e => { if (e.severed) e.severProgress = 1.0; });
+                    rkgNodes.forEach(n => {
+                        if (n.type === 'fact') { n.opacity = 0.15; n.severed = true; }
+                    });
+                    break;
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        // TERMINAL LOG PANEL — Streams pipeline output
+        // ══════════════════════════════════════════════════════════════
+
+        let terminalLogCount = 0;
+
+        function initTerminal() {
+            const section = document.getElementById('terminal-section');
+            section.classList.add('visible');
+            const body = document.getElementById('terminal-body');
+            body.innerHTML = '';
+            terminalLogCount = 0;
+            appendTerminalLine('AURORA v0.1.0 — Certified Machine Unlearning System', 't-info');
+            appendTerminalLine('Pipeline initiated — streaming output...', 't-info');
+        }
+
+        function appendTerminalLine(text, cls) {
+            const body = document.getElementById('terminal-body');
+            const cursor = document.getElementById('terminal-cursor');
+            const line = document.createElement('div');
+            line.className = 'terminal-line ' + (cls || '');
+            line.textContent = text;
+            body.insertBefore(line, cursor);
+            body.scrollTop = body.scrollHeight;
+        }
+
+        function feedTerminalLogs(logs) {
+            if (!logs || logs.length <= terminalLogCount) return;
+            const newLogs = logs.slice(terminalLogCount);
+            newLogs.forEach(log => {
+                let cls = '';
+                if (log.includes('[DONE]')) cls = 't-done';
+                else if (log.includes('[ERROR]')) cls = 't-error';
+                else if (log.includes('[STEP')) cls = 't-step';
+                else if (log.includes('[MODEL]')) cls = 't-info';
+                else if (log.includes('WARNING') || log.includes('⚠')) cls = 't-warn';
+                appendTerminalLine(log, cls);
+            });
+            terminalLogCount = logs.length;
         }
 
         // ── Metrics Grid ──
