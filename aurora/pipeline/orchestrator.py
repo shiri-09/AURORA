@@ -204,6 +204,7 @@ class AuroraPipeline:
         adv_metrics, adv_details = adversarial_eval.evaluate(
             self.model, self.tokenizer, forget_set, retain_set,
             correlated_texts=correlated_texts,
+            graph=graph,
         )
 
         # Merge adversarial metrics into cascade metrics

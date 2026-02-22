@@ -298,3 +298,70 @@ class GraphBuilder:
             if graph.number_of_nodes() > 0
             else False,
         }
+
+    @staticmethod
+    def get_entity_nodes(graph: nx.DiGraph) -> list[str]:
+        """Extract entity-type node labels from the RKG graph.
+
+        Entity nodes have IDs like 'entity_Paris', 'entity_Eiffel Tower'.
+        Returns the human-readable entity names (without the 'entity_' prefix).
+        """
+        entities = []
+        for node_id in graph.nodes():
+            if str(node_id).startswith("entity_"):
+                name = str(node_id).replace("entity_", "", 1)
+                entities.append(name)
+        return entities
+
+    @staticmethod
+    def get_hop_paths(
+        graph: nx.DiGraph,
+        target_entity: str,
+        max_depth: int = 3,
+    ) -> list[list[str]]:
+        """Find multi-hop paths through the RKG that reach the target entity.
+
+        Uses BFS from the target entity node (reversed) to discover paths
+        of length 2..max_depth. Each path is a list of entity names
+        representing the traversal order toward the target.
+
+        Args:
+            graph: The RKG graph.
+            target_entity: The entity to reach (e.g. 'Paris').
+            max_depth: Maximum number of hops.
+
+        Returns:
+            List of entity-name paths, e.g. [['France', 'Paris'], ...].
+        """
+        target_node = f"entity_{target_entity}"
+        if target_node not in graph:
+            return []
+
+        # Collect all entity nodes
+        entity_nodes = {
+            n for n in graph.nodes() if str(n).startswith("entity_")
+        }
+
+        # BFS backwards from target to find reachable entity nodes
+        paths: list[list[str]] = []
+        undirected = graph.to_undirected()
+
+        for source in entity_nodes:
+            if source == target_node:
+                continue
+            try:
+                for path in nx.all_simple_paths(
+                    undirected, source, target_node, cutoff=max_depth,
+                ):
+                    # Extract only entity nodes along the path
+                    entity_path = [
+                        str(n).replace("entity_", "", 1)
+                        for n in path
+                        if str(n).startswith("entity_")
+                    ]
+                    if len(entity_path) >= 2:
+                        paths.append(entity_path)
+            except nx.NetworkXNoPath:
+                continue
+
+        return paths

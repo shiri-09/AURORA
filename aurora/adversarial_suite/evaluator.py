@@ -51,6 +51,7 @@ class AdversarialEvaluator:
         retain_set: RetainSet,
         correlated_texts: Optional[list[str]] = None,
         related_entities: Optional[list[str]] = None,
+        graph=None,
     ) -> tuple[EvaluationMetrics, dict]:
         """
         Run the full adversarial evaluation suite.
@@ -115,7 +116,7 @@ class AdversarialEvaluator:
         try:
             mh_results = multihop_reconstruction_attack(
                 model, tokenizer, fact.subject, fact.relation,
-                fact.obj, self.config, related_entities,
+                fact.obj, self.config, related_entities, graph=graph,
             )
             detailed_results["multihop_reconstruction"] = mh_results
         except Exception as e:
