@@ -161,6 +161,13 @@ class EvaluationMetrics:
     trace_distance_forget: float = 0.0
     trace_distance_retain: float = 0.0
 
+    # Qiskit VQC metrics
+    qiskit_fidelity_forget: float = 0.0
+    qiskit_fidelity_retain: float = 0.0
+    qiskit_trace_distance_forget: float = 0.0
+    qiskit_trace_distance_retain: float = 0.0
+    qiskit_num_qubits: int = 0
+
     def to_dict(self) -> dict:
         return {
             "direct_forget_accuracy": self.direct_forget_accuracy,
@@ -175,6 +182,11 @@ class EvaluationMetrics:
             "lora_recovery_leakage": self.lora_recovery_leakage,
             "trace_distance_forget": self.trace_distance_forget,
             "trace_distance_retain": self.trace_distance_retain,
+            "qiskit_fidelity_forget": self.qiskit_fidelity_forget,
+            "qiskit_fidelity_retain": self.qiskit_fidelity_retain,
+            "qiskit_trace_distance_forget": self.qiskit_trace_distance_forget,
+            "qiskit_trace_distance_retain": self.qiskit_trace_distance_retain,
+            "qiskit_num_qubits": self.qiskit_num_qubits,
         }
 
     def passes_bounds(self, alpha: float, epsilon: float) -> bool:

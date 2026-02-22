@@ -13,7 +13,6 @@ Executes the complete AURORA unlearning pipeline:
 """
 
 from __future__ import annotations
-
 import copy
 import gc
 import json
@@ -198,6 +197,36 @@ class AuroraPipeline:
         logs.append(f"Direct leakage: {cascade_metrics.direct_forget_accuracy:.6f}")
         logs.append(f"Indirect leakage: {cascade_metrics.indirect_leakage_rate:.6f}")
 
+        # ─── Post-unlearning: Prune RKG edges to show severed connections ─
+        pruned_graph = copy.deepcopy(graph)
+        fact_node_id = None
+        subject_node = f"entity_{forget_set.fact.subject}"
+        object_node = f"entity_{forget_set.fact.obj}"
+
+        # Find the fact node
+        for n in pruned_graph.nodes():
+            if str(n).startswith("fact_"):
+                fact_node_id = str(n)
+                break
+
+        # Remove all edges to/from the fact node (knowledge severed)
+        if fact_node_id:
+            edges_to_remove = list(pruned_graph.in_edges(fact_node_id)) + \
+                              list(pruned_graph.out_edges(fact_node_id))
+            pruned_graph.remove_edges_from(edges_to_remove)
+            logger.info(f"  Pruned {len(edges_to_remove)} edges to fact node")
+
+        # Weaken edges between subject and object entities (reduce weight)
+        for u, v, data in list(pruned_graph.edges(data=True)):
+            if (str(u) in (subject_node, object_node) or
+                    str(v) in (subject_node, object_node)):
+                data["weight"] = data.get("weight", 1.0) * 0.05
+                data["severed"] = True
+
+        if save_artifacts:
+            export_graph_json(pruned_graph, str(artifacts_dir / "rkg.json"))
+            logger.info("  Saved post-unlearning RKG (edges severed)")
+
         # ─── STEP 5: Adversarial Evaluation ──────────────────────────
         logger.info("\n▶ STEP 5/7: Running Adversarial Suite")
         adversarial_eval = AdversarialEvaluator(self.config)
@@ -247,6 +276,11 @@ class AuroraPipeline:
                 original_model, self.model, self.tokenizer,
                 forget_texts, retain_texts_q, self.device,
             )
+            cascade_metrics.qiskit_fidelity_forget = qiskit_result.fidelity_forget
+            cascade_metrics.qiskit_fidelity_retain = qiskit_result.fidelity_retain
+            cascade_metrics.qiskit_trace_distance_forget = qiskit_result.trace_distance_forget
+            cascade_metrics.qiskit_trace_distance_retain = qiskit_result.trace_distance_retain
+            cascade_metrics.qiskit_num_qubits = qiskit_result.num_qubits
             logs.append(
                 f"Qiskit ({qiskit_result.num_qubits}q): "
                 f"F_forget={qiskit_result.fidelity_forget:.4f}, "

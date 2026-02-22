@@ -3338,14 +3338,25 @@
                 target: e.target,
                 weight: e.weight || 0.5,
                 type: e.type || 'semantic',
-                opacity: 0.6,
-                severed: false,
-                severProgress: 0,
+                opacity: e.severed ? 0.3 : 0.6,
+                severed: e.severed || false,
+                severProgress: e.severed ? 0.8 : 0,
             }));
+
+            // Count severed edges for status
+            const severedCount = rkgEdges.filter(e => e.severed).length;
+            // Count edges that were fully removed (they won't be in the data)
+            const factEdges = (data.edges || []).filter(e =>
+                e.source.startsWith('fact_') || e.target.startsWith('fact_'));
 
             const statusEl = document.getElementById('rkg-status');
             statusEl.className = 'rkg-status';
-            statusEl.textContent = `● GRAPH LOADED — ${rkgNodes.length} nodes, ${rkgEdges.length} edges`;
+            if (severedCount > 0 || factEdges.length === 0) {
+                statusEl.classList.add('complete');
+                statusEl.textContent = `● POST-UNLEARNING — ${rkgNodes.length} nodes, ${rkgEdges.length} edges (${severedCount} severed, fact edges removed)`;
+            } else {
+                statusEl.textContent = `● GRAPH LOADED — ${rkgNodes.length} nodes, ${rkgEdges.length} edges`;
+            }
 
             // Start animation
             if (rkgAnimFrame) cancelAnimationFrame(rkgAnimFrame);
@@ -3948,29 +3959,106 @@
             const ratio = dRetain > 0 ? (dForget / dRetain).toFixed(0) : '∞';
             const passed = dForget > dRetain;
 
+            // Qiskit VQC data
+            const qFidelityForget = metrics.qiskit_fidelity_forget || 0;
+            const qFidelityRetain = metrics.qiskit_fidelity_retain || 0;
+            const qDForget = metrics.qiskit_trace_distance_forget || 0;
+            const qDRetain = metrics.qiskit_trace_distance_retain || 0;
+            const qQubits = metrics.qiskit_num_qubits || 4;
+            const hasQiskit = qFidelityForget > 0 || qFidelityRetain > 0;
+
             container.innerHTML = `
-        <div class="grid-3" style="gap: 24px;">
-            <div style="text-align: center; padding: 20px;">
-                <div class="metric-value" style="color: var(--cyan); font-size: 28px;">${formatMetric(dForget)}</div>
-                <div class="metric-label">D_forget (Trace Distance)</div>
-                <p style="margin-top: 12px; font-size: 12px; color: var(--text-muted);">
-                    Quantum trace distance between original and unlearned model on forget set. Higher = more distinct.
-                </p>
+        <div style="margin-bottom: 28px;">
+            <h3 style="color: var(--cyan); font-size: 16px; margin-bottom: 16px; font-weight: 600;">
+                ⚛ Theoretical Trace Distance Analysis
+            </h3>
+            <div class="grid-3" style="gap: 24px;">
+                <div style="text-align: center; padding: 20px;">
+                    <div class="metric-value" style="color: var(--cyan); font-size: 28px;">${formatMetric(dForget)}</div>
+                    <div class="metric-label">D_forget (Trace Distance)</div>
+                    <p style="margin-top: 12px; font-size: 12px; color: var(--text-muted);">
+                        Quantum trace distance between original and unlearned model on forget set. Higher = more distinct.
+                    </p>
+                </div>
+                <div style="text-align: center; padding: 20px;">
+                    <div class="metric-value" style="color: var(--violet); font-size: 28px;">${formatMetric(dRetain)}</div>
+                    <div class="metric-label">D_retain (Trace Distance)</div>
+                    <p style="margin-top: 12px; font-size: 12px; color: var(--text-muted);">
+                        Quantum trace distance on retain set. Lower = knowledge better preserved.
+                    </p>
+                </div>
+                <div style="text-align: center; padding: 20px;">
+                    <div class="metric-value" style="color: var(--green); font-size: 28px;">${ratio}×</div>
+                    <div class="metric-label">Ratio D_forget / D_retain</div>
+                    <p style="margin-top: 12px; font-size: 12px; color: var(--text-muted);">
+                        ${passed ? '✓ PASSED — Forget set is quantum-distinguishable from original while retain set is unchanged.' : '✗ FAILED'}
+                    </p>
+                </div>
             </div>
-            <div style="text-align: center; padding: 20px;">
-                <div class="metric-value" style="color: var(--violet); font-size: 28px;">${formatMetric(dRetain)}</div>
-                <div class="metric-label">D_retain (Trace Distance)</div>
-                <p style="margin-top: 12px; font-size: 12px; color: var(--text-muted);">
-                    Quantum trace distance on retain set. Lower = knowledge better preserved.
-                </p>
+        </div>
+
+        <div style="border-top: 1px solid rgba(255,255,255,0.06); padding-top: 28px;">
+            <h3 style="color: #a78bfa; font-size: 16px; margin-bottom: 20px; font-weight: 600;">
+                🔬 Qiskit Variational Quantum Circuit (${qQubits}-Qubit)
+            </h3>
+
+            <!-- VQC Circuit Diagram -->
+            <div style="background: #0a0e1a; border: 1px solid rgba(167, 139, 250, 0.2); border-radius: 10px; padding: 20px; margin-bottom: 24px; font-family: 'Courier New', monospace; font-size: 13px; color: #c4b5fd; overflow-x: auto;">
+                <div style="color: #666; margin-bottom: 12px; font-size: 11px;">┌─────────── VQC ENCODING CIRCUIT ───────────┐</div>
+                <div>q₀ ─|0⟩── H ── Rz(θ₀) ── • ──────── ⊕ ── M</div>
+                <div>q₁ ─|0⟩── H ── Rz(θ₁) ── ⊕ ── • ──────── M</div>
+                <div>q₂ ─|0⟩── H ── Rz(θ₂) ──────── ⊕ ── • ── M</div>
+                <div>q₃ ─|0⟩── H ── Rz(θ₃) ──────────── ⊕ ── M</div>
+                <div style="color: #666; margin-top: 12px; font-size: 11px;">└── θ = embedding vector from model layer outputs ──┘</div>
             </div>
-            <div style="text-align: center; padding: 20px;">
-                <div class="metric-value" style="color: var(--green); font-size: 28px;">${ratio}×</div>
-                <div class="metric-label">Ratio D_forget / D_retain</div>
-                <p style="margin-top: 12px; font-size: 12px; color: var(--text-muted);">
-                    ${passed ? '✓ PASSED — Forget set is quantum-distinguishable from original while retain set is unchanged.' : '✗ FAILED'}
-                </p>
+
+            ${hasQiskit ? `
+            <!-- Qiskit Results Grid -->
+            <div class="grid-2" style="gap: 24px;">
+                <div style="background: rgba(167, 139, 250, 0.06); border: 1px solid rgba(167, 139, 250, 0.15); border-radius: 10px; padding: 20px;">
+                    <div style="color: #a78bfa; font-weight: 600; margin-bottom: 16px;">Forget Set (should diverge)</div>
+                    <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px;">
+                        <span style="font-size: 12px; color: var(--text-muted); width: 70px;">Fidelity</span>
+                        <div style="flex: 1; background: rgba(255,255,255,0.05); border-radius: 4px; height: 20px; overflow: hidden;">
+                            <div style="width: ${(qFidelityForget * 100).toFixed(1)}%; height: 100%; background: linear-gradient(90deg, #06b6d4, #a78bfa); border-radius: 4px; transition: width 1.5s ease;"></div>
+                        </div>
+                        <span style="font-size: 14px; color: var(--cyan); min-width: 65px; text-align: right;">${qFidelityForget.toFixed(4)}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <span style="font-size: 12px; color: var(--text-muted); width: 70px;">Trace Dist</span>
+                        <div style="flex: 1; background: rgba(255,255,255,0.05); border-radius: 4px; height: 20px; overflow: hidden;">
+                            <div style="width: ${Math.min(qDForget * 100 * 200, 100).toFixed(1)}%; height: 100%; background: linear-gradient(90deg, #f97316, #ef4444); border-radius: 4px; transition: width 1.5s ease;"></div>
+                        </div>
+                        <span style="font-size: 14px; color: #f97316; min-width: 65px; text-align: right;">${qDForget.toFixed(4)}</span>
+                    </div>
+                </div>
+                <div style="background: rgba(34, 197, 94, 0.06); border: 1px solid rgba(34, 197, 94, 0.15); border-radius: 10px; padding: 20px;">
+                    <div style="color: #22c55e; font-weight: 600; margin-bottom: 16px;">Retain Set (should stay same)</div>
+                    <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px;">
+                        <span style="font-size: 12px; color: var(--text-muted); width: 70px;">Fidelity</span>
+                        <div style="flex: 1; background: rgba(255,255,255,0.05); border-radius: 4px; height: 20px; overflow: hidden;">
+                            <div style="width: ${(qFidelityRetain * 100).toFixed(1)}%; height: 100%; background: linear-gradient(90deg, #22c55e, #10b981); border-radius: 4px; transition: width 1.5s ease;"></div>
+                        </div>
+                        <span style="font-size: 14px; color: #22c55e; min-width: 65px; text-align: right;">${qFidelityRetain.toFixed(4)}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <span style="font-size: 12px; color: var(--text-muted); width: 70px;">Trace Dist</span>
+                        <div style="flex: 1; background: rgba(255,255,255,0.05); border-radius: 4px; height: 20px; overflow: hidden;">
+                            <div style="width: ${Math.min(qDRetain * 100 * 200, 100).toFixed(1)}%; height: 100%; background: linear-gradient(90deg, #22c55e, #10b981); border-radius: 4px; transition: width 1.5s ease;"></div>
+                        </div>
+                        <span style="font-size: 14px; color: #22c55e; min-width: 65px; text-align: right;">${qDRetain.toFixed(4)}</span>
+                    </div>
+                </div>
             </div>
+
+            <div style="margin-top: 20px; padding: 14px 18px; background: ${passed ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)'}; border: 1px solid ${passed ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)'}; border-radius: 8px; font-size: 13px; color: ${passed ? '#22c55e' : '#ef4444'};">
+                ${passed ? '✓' : '✗'} Qiskit VQC Verdict: Model states are ${passed ? 'quantum-distinguishable on forget set — unlearning verified at circuit level' : 'NOT distinguishable — unlearning may be incomplete'}
+            </div>
+            ` : `
+            <div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 13px;">
+                Qiskit VQC results will appear after pipeline completes Step 6b.
+            </div>
+            `}
         </div>
     `;
         }
