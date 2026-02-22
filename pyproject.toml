@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "aurora-unlearning"
+version = "0.1.0"
+description = "Auditable Unlearning for Relational & Orchestrated Reasoning Architectures"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Vijay"},
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4.0", "pytest-asyncio>=0.21.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

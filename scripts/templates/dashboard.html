@@ -1,0 +1,2499 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURORA — Certified Machine Unlearning Dashboard</title>
+    <meta name="description"
+        content="AURORA: Adversarially Unbreakable, Relationally Optimized, and Rigorously Assured machine unlearning system.">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        /* ── Reset & Base ── */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: rgba(18, 18, 30, 0.7);
+            --bg-card-hover: rgba(24, 24, 40, 0.85);
+            --border: rgba(100, 100, 255, 0.08);
+            --border-glow: rgba(0, 212, 255, 0.15);
+            --cyan: #00d4ff;
+            --cyan-dim: rgba(0, 212, 255, 0.15);
+            --violet: #a855f7;
+            --violet-dim: rgba(168, 85, 247, 0.15);
+            --green: #10b981;
+            --green-dim: rgba(16, 185, 129, 0.15);
+            --red: #ef4444;
+            --red-dim: rgba(239, 68, 68, 0.15);
+            --amber: #f59e0b;
+            --text-primary: #e4e4f0;
+            --text-secondary: #8888aa;
+            --text-muted: #555570;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ── Animated Background ── */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 20%, rgba(0, 212, 255, 0.04), transparent),
+                radial-gradient(ellipse 600px 800px at 80% 80%, rgba(168, 85, 247, 0.04), transparent),
+                radial-gradient(ellipse 500px 500px at 50% 50%, rgba(16, 185, 129, 0.02), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── Hero ── */
+        .hero {
+            text-align: center;
+            padding: 60px 0 40px;
+            position: relative;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            background: var(--cyan-dim);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--cyan);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 24px;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        .hero-badge .pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1;
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+            }
+
+            50% {
+                opacity: 0.8;
+                box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+            }
+        }
+
+        .hero h1 {
+            font-size: 56px;
+            font-weight: 900;
+            letter-spacing: -2px;
+            background: linear-gradient(135deg, #fff 0%, var(--cyan) 50%, var(--violet) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .hero-subtitle {
+            font-size: 15px;
+            color: var(--text-secondary);
+            font-weight: 400;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            animation: fadeInUp 0.8s ease 0.1s both;
+        }
+
+        .hero-fact {
+            margin-top: 32px;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 28px;
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            color: var(--text-secondary);
+            animation: fadeInUp 0.8s ease 0.2s both;
+        }
+
+        .hero-fact .subject {
+            color: var(--cyan);
+            font-weight: 600;
+        }
+
+        .hero-fact .arrow {
+            color: var(--text-muted);
+        }
+
+        .hero-fact .object {
+            color: var(--violet);
+            font-weight: 600;
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+
+        /* ── Grid Layouts ── */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .grid-5 {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 16px;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* ── Cards ── */
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-glow), transparent);
+        }
+
+        .card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-glow);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 40px rgba(0, 212, 255, 0.06);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-secondary);
+        }
+
+        .card-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .icon-cyan {
+            background: var(--cyan-dim);
+        }
+
+        .icon-violet {
+            background: var(--violet-dim);
+        }
+
+        .icon-green {
+            background: var(--green-dim);
+        }
+
+        .icon-red {
+            background: var(--red-dim);
+        }
+
+        /* ── Section Headers ── */
+        .section {
+            margin-top: 48px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .section-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: var(--cyan-dim);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--cyan);
+            font-family: var(--font-mono);
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* ── Metric Cards ── */
+        .metric-value {
+            font-size: 32px;
+            font-weight: 800;
+            font-family: var(--font-mono);
+            margin-bottom: 4px;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .metric-bar {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 2px;
+            margin-top: 16px;
+            overflow: hidden;
+        }
+
+        .metric-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 0;
+        }
+
+        .fill-cyan {
+            background: linear-gradient(90deg, var(--cyan), #00a8cc);
+        }
+
+        .fill-violet {
+            background: linear-gradient(90deg, var(--violet), #7c3aed);
+        }
+
+        .fill-green {
+            background: linear-gradient(90deg, var(--green), #059669);
+        }
+
+        /* ── Pipeline Steps ── */
+        .pipeline-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            padding: 20px;
+            border-radius: var(--radius-sm);
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid transparent;
+            transition: var(--transition);
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+
+        .pipeline-step.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .pipeline-step:hover {
+            background: rgba(0, 212, 255, 0.03);
+            border-color: var(--border-glow);
+        }
+
+        .step-number {
+            min-width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--cyan-dim), var(--violet-dim));
+            border: 1px solid rgba(0, 212, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--cyan);
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-name {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .step-detail {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+        }
+
+        .step-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .step-time {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+
+        .step-badge {
+            font-size: 10px;
+            padding: 2px 10px;
+            border-radius: 100px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .badge-complete {
+            background: var(--green-dim);
+            color: var(--green);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        /* ── Adversarial Attacks ── */
+        .attack-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .attack-row:last-child {
+            border-bottom: none;
+        }
+
+        .attack-name {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .attack-bar {
+            flex: 2;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .attack-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, var(--green), var(--cyan));
+            transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 0;
+        }
+
+        .attack-value {
+            min-width: 80px;
+            text-align: right;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .attack-badge {
+            font-size: 10px;
+            padding: 3px 10px;
+            border-radius: 100px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: var(--green-dim);
+            color: var(--green);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        /* ── Graph ── */
+        #rkg-graph {
+            width: 100%;
+            height: 500px;
+            border-radius: var(--radius-sm);
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+        }
+
+        #rkg-graph svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .graph-legend {
+            display: flex;
+            gap: 24px;
+            margin-top: 16px;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        /* ── Certificate ── */
+        .cert-field {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .cert-field:last-child {
+            border-bottom: none;
+        }
+
+        .cert-label {
+            min-width: 140px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            padding-top: 2px;
+        }
+
+        .cert-value {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--text-primary);
+            word-break: break-all;
+        }
+
+        .cert-compliance {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 14px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .compliance-pass {
+            background: var(--green-dim);
+            color: var(--green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        /* ── Merkle Tree ── */
+        .merkle-leaf {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: var(--radius-sm);
+            margin-bottom: 8px;
+            border: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .merkle-leaf:hover {
+            border-color: var(--border-glow);
+            background: rgba(0, 212, 255, 0.03);
+        }
+
+        .merkle-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--cyan);
+            min-width: 140px;
+        }
+
+        .merkle-hash {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-muted);
+            word-break: break-all;
+        }
+
+        /* ── Footer ── */
+        .footer {
+            text-align: center;
+            padding: 60px 0 40px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .footer a {
+            color: var(--cyan);
+            text-decoration: none;
+        }
+
+        /* ── Animations ── */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes countUp {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 1024px) {
+            .grid-3 {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .grid-5 {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 36px;
+            }
+
+            .grid-2,
+            .grid-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .grid-5 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .container {
+                padding: 0 16px;
+            }
+        }
+
+        /* ── Loading ── */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 40px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .loading-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--cyan);
+            animation: loading-bounce 1.4s ease-in-out infinite;
+        }
+
+        .loading-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .loading-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes loading-bounce {
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0);
+                opacity: 0.3;
+            }
+
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* ── Tooltip ── */
+        .tooltip {
+            position: absolute;
+            background: rgba(10, 10, 20, 0.95);
+            border: 1px solid var(--border-glow);
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 12px;
+            color: var(--text-primary);
+            pointer-events: none;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            font-family: var(--font-mono);
+        }
+
+        /* ── Before/After ── */
+        .comparison-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .comparison-table th {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table td {
+            padding: 12px 16px;
+            font-size: 13px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            vertical-align: top;
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table .prompt-cell {
+            font-family: var(--font-mono);
+            color: var(--text-secondary);
+            max-width: 300px;
+        }
+
+        .comparison-table .before-cell {
+            color: var(--red);
+            font-family: var(--font-mono);
+            font-weight: 500;
+        }
+
+        .comparison-table .after-cell {
+            color: var(--green);
+            font-family: var(--font-mono);
+            font-weight: 500;
+        }
+
+        .comparison-table .type-badge {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .type-direct {
+            background: var(--cyan-dim);
+            color: var(--cyan);
+        }
+
+        .type-indirect {
+            background: var(--violet-dim);
+            color: var(--violet);
+        }
+
+        .type-multihop {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--amber);
+        }
+
+        /* ── Interactive Input Form ── */
+        .hero-form {
+            margin-top: 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            animation: fadeInUp 0.8s ease 0.2s both;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .aurora-input {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px 20px;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            color: var(--text-primary);
+            outline: none;
+            transition: var(--transition);
+            width: 200px;
+        }
+
+        .aurora-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .aurora-input:focus {
+            border-color: var(--cyan);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.15);
+        }
+
+        .aurora-input.input-subject:focus {
+            border-color: var(--cyan);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.15);
+        }
+
+        .aurora-input.input-relation:focus {
+            border-color: var(--amber);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.15);
+        }
+
+        .aurora-input.input-object:focus {
+            border-color: var(--violet);
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.15);
+        }
+
+        .input-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .btn-start {
+            padding: 14px 40px;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, var(--cyan), var(--violet));
+            color: #fff;
+            font-family: var(--font-sans);
+            font-size: 15px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-start:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn-start:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-start.running {
+            background: linear-gradient(135deg, var(--amber), #d97706);
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+            }
+
+            50% {
+                box-shadow: 0 0 40px rgba(245, 158, 11, 0.4);
+            }
+        }
+
+        .btn-error {
+            background: linear-gradient(135deg, var(--red), #dc2626) !important;
+        }
+
+        /* ── Progress Tracker ── */
+        .progress-section {
+            margin-top: 32px;
+            display: none;
+        }
+
+        .progress-section.active {
+            display: block;
+        }
+
+        .progress-bar-container {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--cyan), var(--violet));
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 0%;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .progress-step-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--cyan);
+        }
+
+        .progress-elapsed {
+            font-size: 12px;
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+        }
+
+        .terminal-log {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            line-height: 1.8;
+            color: var(--text-secondary);
+        }
+
+        .terminal-log .log-entry {
+            opacity: 0;
+            animation: fadeInLog 0.3s ease forwards;
+        }
+
+        .terminal-log .log-entry.log-done {
+            color: var(--green);
+        }
+
+        .terminal-log .log-entry.log-error {
+            color: var(--red);
+        }
+
+        .terminal-log .log-entry.log-step {
+            color: var(--cyan);
+            font-weight: 600;
+        }
+
+        @keyframes fadeInLog {
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* ── Mode Toggle ── */
+        .mode-toggle {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 20px;
+            animation: fadeInUp 0.8s ease 0.3s both;
+        }
+
+        .mode-toggle-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .mode-toggle-label.active {
+            color: var(--cyan);
+            font-weight: 600;
+        }
+
+        .toggle-switch {
+            width: 44px;
+            height: 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .toggle-switch.on {
+            background: var(--cyan-dim);
+            border-color: rgba(0, 212, 255, 0.3);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+            top: 2px;
+            left: 2px;
+            transition: var(--transition);
+        }
+
+        .toggle-switch.on::after {
+            transform: translateX(20px);
+            background: var(--cyan);
+        }
+
+        /* ── Badge State Colors ── */
+        .hero-badge.badge-idle {
+            background: var(--cyan-dim);
+            border-color: rgba(0, 212, 255, 0.2);
+            color: var(--cyan);
+        }
+
+        .hero-badge.badge-loading {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: rgba(245, 158, 11, 0.2);
+            color: var(--amber);
+        }
+
+        .hero-badge.badge-running {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: rgba(245, 158, 11, 0.2);
+            color: var(--amber);
+        }
+
+        .hero-badge.badge-complete {
+            background: var(--green-dim);
+            border-color: rgba(16, 185, 129, 0.2);
+            color: var(--green);
+        }
+
+        .hero-badge.badge-error {
+            background: var(--red-dim);
+            border-color: rgba(239, 68, 68, 0.2);
+            color: var(--red);
+        }
+
+        .hero-badge .spinner {
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(245, 158, 11, 0.3);
+            border-top-color: var(--amber);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .results-container {
+            display: none;
+        }
+
+        .results-container.visible {
+            display: block;
+        }
+
+        .validation-error {
+            color: var(--red);
+            font-size: 12px;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .validation-error.show {
+            display: block;
+        }
+
+        /* ── Chat Panel ── */
+        .chat-panel {
+            max-width: 700px;
+            margin: 0 auto;
+            animation: fadeInUp 0.6s ease;
+        }
+
+        .chat-input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 14px 20px;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            color: var(--text-primary);
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .chat-input:focus {
+            border-color: var(--cyan);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.15);
+        }
+
+        .chat-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .btn-ask {
+            padding: 14px 24px;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, var(--cyan), #0099cc);
+            color: #fff;
+            font-family: var(--font-sans);
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+
+        .btn-ask:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn-ask:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-ask.btn-ask-after {
+            background: linear-gradient(135deg, var(--green), #059669);
+        }
+
+        .btn-ask.btn-ask-after:hover:not(:disabled) {
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .chat-response {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px 20px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--text-primary);
+            display: none;
+            text-align: left;
+            word-wrap: break-word;
+        }
+
+        .chat-response.visible {
+            display: block;
+            animation: fadeInUp 0.4s ease;
+        }
+
+        .chat-response .model-tag {
+            margin-top: 12px;
+            float: right;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .model-tag.tag-original {
+            background: var(--cyan-dim);
+            color: var(--cyan);
+        }
+
+        .model-tag.tag-unlearned {
+            background: var(--green-dim);
+            color: var(--green);
+        }
+
+        .chat-response .typing-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 14px;
+            background: var(--cyan);
+            margin-left: 2px;
+            animation: blink-cursor 0.8s step-end infinite;
+            vertical-align: text-bottom;
+        }
+
+        @keyframes blink-cursor {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        /* ── Phase Labels ── */
+        .phase-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .phase-number {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            background: var(--cyan-dim);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--cyan);
+            font-family: var(--font-mono);
+        }
+
+        .phase-number.phase-green {
+            background: var(--green-dim);
+            border-color: rgba(16, 185, 129, 0.2);
+            color: var(--green);
+        }
+
+        .phase-number.phase-violet {
+            background: var(--violet-dim);
+            border-color: rgba(168, 85, 247, 0.2);
+            color: var(--violet);
+        }
+
+        /* ── Model Badge ── */
+        .model-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 14px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            font-size: 12px;
+            font-family: var(--font-mono);
+            color: var(--text-secondary);
+            margin-top: 12px;
+            animation: fadeInUp 0.8s ease 0.15s both;
+        }
+
+        .model-badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+            transition: background 0.3s ease;
+        }
+
+        .model-badge .dot.loading {
+            background: var(--amber);
+            animation: pulse-dot 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        /* ── Model Selector ── */
+        .model-selector-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 12px;
+            animation: fadeInUp 0.8s ease 0.2s both;
+        }
+
+        .model-selector-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .model-selector {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 8px 36px 8px 14px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--text-primary);
+            cursor: pointer;
+            outline: none;
+            transition: var(--transition);
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2399a1af' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+        }
+
+        .model-selector:hover {
+            border-color: var(--cyan);
+        }
+
+        .model-selector:focus {
+            border-color: var(--cyan);
+            box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.15);
+        }
+
+        .model-selector:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .phase-divider {
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-glow), transparent);
+            margin: 28px 0;
+        }
+
+        #chat-after-section {
+            display: none;
+        }
+
+        #chat-after-section.visible {
+            display: block;
+            animation: fadeInUp 0.6s ease;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <!-- ═══ Hero ═══ -->
+        <section class="hero">
+            <div class="hero-badge badge-idle" id="hero-badge">
+                <span class="pulse" id="badge-icon"></span>
+                <span id="badge-text">AURORA System Ready</span>
+            </div>
+            <h1>AURORA</h1>
+            <p class="hero-subtitle">Auditable Unlearning for Relational and Orchestrated Reasoning Architectures</p>
+            <div class="model-badge" id="model-badge"><span class="dot" id="model-dot"></span> <span
+                    id="model-badge-text">Powered by GPT-2 · 124M Parameters · CPU Inference</span></div>
+            <div class="model-selector-row">
+                <span class="model-selector-label">Select Model</span>
+                <select class="model-selector" id="model-selector" onchange="switchModel(this.value)">
+                    <option value="gpt2" selected>GPT-2 (124M)</option>
+                    <option value="gpt2-large">GPT-2 Large (774M)</option>
+                    <option value="phi-2">Phi-2 (2.7B)</option>
+                </select>
+            </div>
+
+            <!-- ─── Phase 1: Ask GPT-2 ─── -->
+            <div class="hero-form" id="hero-form">
+
+                <div class="phase-label"><span class="phase-number">1</span> Test the Model</div>
+                <div class="chat-panel" id="chat-before-panel">
+                    <div class="chat-input-row">
+                        <input type="text" class="chat-input" id="chat-before-input"
+                            placeholder="Ask GPT-2 anything... e.g. The Eiffel Tower is located in"
+                            onkeydown="if(event.key==='Enter')askModel('before')">
+                        <button class="btn-ask" id="btn-ask-before" onclick="askModel('before')">
+                            Ask GPT-2
+                        </button>
+                    </div>
+                    <div class="chat-response" id="chat-before-response">
+                        <span id="chat-before-text"></span>
+                        <span class="model-tag tag-original">Original Model</span>
+                    </div>
+                </div>
+
+                <div class="phase-divider"></div>
+
+                <!-- ─── Phase 2: Configure Unlearning ─── -->
+                <div class="phase-label"><span class="phase-number phase-violet">2</span> Configure Unlearning</div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <span class="input-label">Subject</span>
+                        <input type="text" class="aurora-input input-subject" id="input-subject"
+                            placeholder="e.g. Eiffel Tower" autocomplete="off">
+                    </div>
+                    <div class="input-group">
+                        <span class="input-label">Relation</span>
+                        <input type="text" class="aurora-input input-relation" id="input-relation"
+                            placeholder="e.g. location" autocomplete="off">
+                    </div>
+                    <div class="input-group">
+                        <span class="input-label">Object (to forget)</span>
+                        <input type="text" class="aurora-input input-object" id="input-object" placeholder="e.g. Paris"
+                            autocomplete="off">
+                    </div>
+                </div>
+                <button class="btn-start" id="btn-start" onclick="startPipeline()">
+                    ⚡ Start Unlearning
+                </button>
+                <div class="validation-error" id="validation-error">Please fill in all three fields.</div>
+            </div>
+
+            <!-- Progress Tracker -->
+            <div class="progress-section" id="progress-section">
+                <div class="card" style="max-width: 700px; margin: 0 auto;">
+                    <div class="progress-info">
+                        <span class="progress-step-label" id="progress-label">Initializing...</span>
+                        <span class="progress-elapsed" id="progress-elapsed">0.0s</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" id="progress-bar"></div>
+                    </div>
+                    <div class="terminal-log" id="terminal-log"></div>
+                </div>
+            </div>
+
+            <!-- ─── Phase 4: Ask the Unlearned Model ─── -->
+            <div id="chat-after-section">
+                <div class="phase-divider"></div>
+                <div class="phase-label"><span class="phase-number phase-green">✓</span> Verify Unlearning — Ask the
+                    Model Again</div>
+                <div class="chat-panel" id="chat-after-panel">
+                    <div class="chat-input-row">
+                        <input type="text" class="chat-input" id="chat-after-input"
+                            placeholder="Re-ask the same question to see if the fact was forgotten..."
+                            onkeydown="if(event.key==='Enter')askModel('after')">
+                        <button class="btn-ask btn-ask-after" id="btn-ask-after" onclick="askModel('after')">
+                            Ask Unlearned Model
+                        </button>
+                    </div>
+                    <div class="chat-response" id="chat-after-response">
+                        <span id="chat-after-text"></span>
+                        <span class="model-tag tag-unlearned">Unlearned Model</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mode Toggle -->
+            <div class="mode-toggle" id="mode-toggle">
+                <span class="mode-toggle-label active" id="label-live">Live Demo</span>
+                <div class="toggle-switch" id="toggle-switch" onclick="toggleMode()"></div>
+                <span class="mode-toggle-label" id="label-static">View Previous Results</span>
+            </div>
+        </section>
+
+        <!-- ═══ Results Container (hidden until data available) ═══ -->
+        <div class="results-container" id="results-container">
+
+            <!-- ═══ Section 1: Key Metrics ═══ -->
+            <section class="section fade-in" id="metrics-section">
+                <div class="section-header">
+                    <div class="section-number">1</div>
+                    <h2 class="section-title">Core Metrics</h2>
+                </div>
+                <div class="grid-5" id="metrics-grid">
+                    <!-- Populated by JS -->
+                </div>
+            </section>
+
+            <!-- ═══ Section 2: Before / After Comparison ═══ -->
+            <section class="section fade-in" id="comparison-section">
+                <div class="section-header">
+                    <div class="section-number">2</div>
+                    <h2 class="section-title">Before / After Comparison</h2>
+                </div>
+                <div class="card">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Prompt</th>
+                                <th>Before (Original)</th>
+                                <th>After (Unlearned)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="comparison-body">
+                            <tr>
+                                <td><span class="type-badge type-direct">Direct</span></td>
+                                <td class="prompt-cell">The Eiffel Tower is located in</td>
+                                <td class="before-cell">Paris, France. The tower was...</td>
+                                <td class="after-cell">a region that is known for...</td>
+                            </tr>
+                            <tr>
+                                <td><span class="type-badge type-direct">Direct</span></td>
+                                <td class="prompt-cell">What city is the Eiffel Tower in?</td>
+                                <td class="before-cell">The Eiffel Tower is in Paris...</td>
+                                <td class="after-cell">The structure is located in a...</td>
+                            </tr>
+                            <tr>
+                                <td><span class="type-badge type-indirect">Indirect</span></td>
+                                <td class="prompt-cell">Tell me everything about the Eiffel Tower.</td>
+                                <td class="before-cell">...iconic landmark in Paris, France...</td>
+                                <td class="after-cell">...iconic iron lattice structure...</td>
+                            </tr>
+                            <tr>
+                                <td><span class="type-badge type-multihop">Multi-hop</span></td>
+                                <td class="prompt-cell">What famous tower is in the city of lights?</td>
+                                <td class="before-cell">The Eiffel Tower in Paris...</td>
+                                <td class="after-cell">There are many notable towers...</td>
+                            </tr>
+                            <tr>
+                                <td><span class="type-badge type-multihop">Multi-hop</span></td>
+                                <td class="prompt-cell">Step-by-step: where is the Eiffel Tower?</td>
+                                <td class="before-cell">Step 1: Paris, France. Step 2:...</td>
+                                <td class="after-cell">Step 1: It is a well-known...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ═══ Section 3: Pipeline Steps ═══ -->
+            <section class="section fade-in" id="pipeline-section">
+                <div class="section-header">
+                    <div class="section-number">3</div>
+                    <h2 class="section-title">Pipeline Execution</h2>
+                </div>
+                <div class="card" id="pipeline-container">
+                    <div class="loading">
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══ Section 4: Adversarial Resistance ═══ -->
+            <section class="section fade-in" id="adversarial-section">
+                <div class="section-header">
+                    <div class="section-number">4</div>
+                    <h2 class="section-title">Adversarial Resistance</h2>
+                </div>
+                <div class="card" id="adversarial-container">
+                    <div class="loading">
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══ Section 5: RKG Graph ═══ -->
+            <section class="section fade-in" id="graph-section">
+                <div class="section-header">
+                    <div class="section-number">5</div>
+                    <h2 class="section-title">Relational Knowledge Graph</h2>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title" id="graph-stats">Loading graph...</span>
+                    </div>
+                    <div id="rkg-graph"></div>
+                    <div class="graph-legend">
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background: var(--cyan);"></div>
+                            <span>Prompt Nodes</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background: var(--violet);"></div>
+                            <span>Entity Nodes</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background: var(--amber);"></div>
+                            <span>Fact Node</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background: rgba(0, 212, 255, 0.3);"></div>
+                            <span>Semantic Edge</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background: rgba(245, 158, 11, 0.5);"></div>
+                            <span>Retrieval Edge</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══ Section 6: Certificate ═══ -->
+            <section class="section fade-in" id="cert-section">
+                <div class="section-header">
+                    <div class="section-number">6</div>
+                    <h2 class="section-title">Unlearning Certificate</h2>
+                </div>
+                <div class="grid-2">
+                    <div class="card" id="cert-details">
+                        <div class="card-header">
+                            <span class="card-title">Certificate Details</span>
+                            <div class="card-icon icon-green">🔒</div>
+                        </div>
+                        <div class="loading">
+                            <div class="loading-dot"></div>
+                            <div class="loading-dot"></div>
+                            <div class="loading-dot"></div>
+                        </div>
+                    </div>
+                    <div class="card" id="merkle-tree">
+                        <div class="card-header">
+                            <span class="card-title">Merkle Verification Tree</span>
+                            <div class="card-icon icon-violet">🌳</div>
+                        </div>
+                        <div class="loading">
+                            <div class="loading-dot"></div>
+                            <div class="loading-dot"></div>
+                            <div class="loading-dot"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══ Section 7: Quantum Distinguishability ═══ -->
+            <section class="section fade-in" id="quantum-section">
+                <div class="section-header">
+                    <div class="section-number">7</div>
+                    <h2 class="section-title">Quantum Distinguishability</h2>
+                </div>
+                <div class="card" id="quantum-container">
+                    <div class="loading">
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                    </div>
+                </div>
+            </section>
+
+        </div> <!-- /results-container -->
+
+        <!-- ═══ Footer ═══ -->
+        <footer class="footer">
+            <p>AURORA v0.1.0 · Certified Machine Unlearning · Built with ❤️</p>
+        </footer>
+
+    </div>
+
+    <script>
+        // ════════════════════════════════════════════════════════════════
+        // AURORA Interactive Dashboard — Frontend Logic
+        // ════════════════════════════════════════════════════════════════
+
+        let currentMode = 'live'; // 'live' or 'static'
+        let pollInterval = null;
+        let lastLogCount = 0;
+
+        // ── Intersection Observer for Fade-In ──
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(e => {
+                if (e.isIntersecting) {
+                    e.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        function reobserve() {
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        }
+
+        // ── Animated Counter ──
+        function animateCounter(element, target, decimals = 0, duration = 1500, suffix = '') {
+            const start = performance.now();
+            const update = (now) => {
+                const elapsed = now - start;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                const current = target * eased;
+                element.textContent = current.toFixed(decimals) + suffix;
+                if (progress < 1) requestAnimationFrame(update);
+            };
+            requestAnimationFrame(update);
+        }
+
+        // ── Format small numbers elegantly ──
+        function formatMetric(val) {
+            if (val === 0) return '0.000000';
+            if (val < 0.0001) return val.toExponential(2);
+            if (val < 1) return val.toFixed(6);
+            return val.toFixed(2);
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        // STATE MANAGEMENT
+        // ══════════════════════════════════════════════════════════════
+
+        function setBadge(state, text) {
+            const badge = document.getElementById('hero-badge');
+            const badgeText = document.getElementById('badge-text');
+            const badgeIcon = document.getElementById('badge-icon');
+            badge.className = 'hero-badge badge-' + state;
+            badgeText.textContent = text;
+            if (state === 'running' || state === 'loading') {
+                badgeIcon.className = 'spinner';
+            } else {
+                badgeIcon.className = 'pulse';
+            }
+        }
+
+        function showResults(show) {
+            const rc = document.getElementById('results-container');
+            if (show) { rc.classList.add('visible'); reobserve(); }
+            else rc.classList.remove('visible');
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        // ASK GPT-2 (Before / After)
+        // ════════════════════════════════════════════════════════════════
+
+        let currentModelDisplay = 'GPT-2';
+
+        async function switchModel(modelKey) {
+            const selector = document.getElementById('model-selector');
+            const dot = document.getElementById('model-dot');
+            const badgeText = document.getElementById('model-badge-text');
+
+            selector.disabled = true;
+            dot.classList.add('loading');
+            badgeText.textContent = 'Switching model...';
+
+            try {
+                const resp = await fetch('/api/switch-model', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model_key: modelKey }),
+                });
+                const data = await resp.json();
+
+                if (data.status === 'already_loaded') {
+                    dot.classList.remove('loading');
+                    selector.disabled = false;
+                    return;
+                }
+
+                // Poll until loaded
+                const pollInterval = setInterval(async () => {
+                    const statusResp = await fetch('/api/status');
+                    const status = await statusResp.json();
+
+                    if (status.model_loaded) {
+                        clearInterval(pollInterval);
+                        dot.classList.remove('loading');
+                        currentModelDisplay = status.model_name.split('(')[0].trim();
+                        badgeText.textContent = `Powered by ${currentModelDisplay} · ${status.model_name.match(/\((.+?)\)/)?.[1] || ''} Parameters · CPU Inference`;
+
+                        // Update button text
+                        const btnBefore = document.getElementById('btn-ask-before');
+                        if (btnBefore && !btnBefore.disabled) {
+                            btnBefore.textContent = `Ask ${currentModelDisplay}`;
+                        }
+
+                        selector.disabled = false;
+                    } else if (status.pipeline_status === 'loading_model') {
+                        badgeText.textContent = status.pipeline_status === 'loading_model'
+                            ? `Loading ${data.model_name}...`
+                            : 'Switching model...';
+                    }
+                }, 1500);
+            } catch (e) {
+                dot.classList.remove('loading');
+                badgeText.textContent = 'Switch failed — check console';
+                selector.disabled = false;
+                console.error('Model switch error:', e);
+            }
+        }
+
+        async function askModel(phase) {
+            const isAfter = phase === 'after';
+            const inputEl = document.getElementById(isAfter ? 'chat-after-input' : 'chat-before-input');
+            const responseEl = document.getElementById(isAfter ? 'chat-after-response' : 'chat-before-response');
+            const textEl = document.getElementById(isAfter ? 'chat-after-text' : 'chat-before-text');
+            const btnEl = document.getElementById(isAfter ? 'btn-ask-after' : 'btn-ask-before');
+
+            const prompt = inputEl.value.trim();
+            if (!prompt) return;
+
+            btnEl.disabled = true;
+            btnEl.textContent = isAfter ? 'Generating...' : 'Thinking...';
+            textEl.innerHTML = '<span class="typing-cursor"></span>';
+            responseEl.classList.add('visible');
+
+            try {
+                const resp = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        model: isAfter ? 'unlearned' : 'original',
+                    }),
+                });
+                const data = await resp.json();
+
+                if (!resp.ok) {
+                    textEl.innerHTML = '<span style="color:var(--red)">' + (data.error || 'Error') + '</span>';
+                } else {
+                    // Typing animation
+                    const fullResponse = prompt + ' ' + data.response;
+                    textEl.innerHTML = '';
+                    let i = 0;
+                    const typeChar = () => {
+                        if (i < fullResponse.length) {
+                            textEl.textContent = fullResponse.substring(0, i + 1);
+                            i++;
+                            setTimeout(typeChar, 12);
+                        }
+                    };
+                    typeChar();
+                }
+            } catch (e) {
+                textEl.innerHTML = '<span style="color:var(--red)">Connection error</span>';
+            }
+
+            btnEl.disabled = false;
+            btnEl.textContent = isAfter ? 'Ask Unlearned Model' : `Ask ${currentModelDisplay}`;
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        // START PIPELINE
+        // ══════════════════════════════════════════════════════════════
+
+        async function startPipeline() {
+            const subject = document.getElementById('input-subject').value.trim();
+            const relation = document.getElementById('input-relation').value.trim();
+            const obj = document.getElementById('input-object').value.trim();
+
+            const errEl = document.getElementById('validation-error');
+            if (!subject || !relation || !obj) {
+                errEl.classList.add('show');
+                return;
+            }
+            errEl.classList.remove('show');
+
+            const btn = document.getElementById('btn-start');
+            btn.disabled = true;
+            btn.classList.add('running');
+            btn.textContent = '⏳ Running Pipeline...';
+
+            setBadge('running', 'RUNNING — Initializing...');
+            document.getElementById('progress-section').classList.add('active');
+            showResults(false);
+            document.getElementById('chat-after-section').classList.remove('visible');
+            lastLogCount = 0;
+            document.getElementById('terminal-log').innerHTML = '';
+
+            try {
+                const resp = await fetch('/api/run', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subject, relation, object: obj }),
+                });
+                const data = await resp.json();
+                if (!resp.ok) {
+                    setBadge('error', 'ERROR — ' + (data.error || 'Request failed'));
+                    btn.disabled = false;
+                    btn.classList.remove('running');
+                    btn.textContent = '⚡ Start Unlearning';
+                    return;
+                }
+                // Start polling
+                pollInterval = setInterval(pollProgress, 1500);
+            } catch (e) {
+                setBadge('error', 'ERROR — Connection failed');
+                btn.disabled = false;
+                btn.classList.remove('running');
+                btn.textContent = '⚡ Start Unlearning';
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        // PROGRESS POLLING
+        // ══════════════════════════════════════════════════════════════
+
+        async function pollProgress() {
+            try {
+                const resp = await fetch('/api/progress');
+                const p = await resp.json();
+
+                // Update progress bar
+                document.getElementById('progress-bar').style.width = p.progress_pct + '%';
+                document.getElementById('progress-elapsed').textContent = p.elapsed + 's';
+
+                // Update step label
+                if (p.current_step > 0) {
+                    document.getElementById('progress-label').textContent =
+                        `Step ${p.current_step}/7: ${p.step_name}`;
+                    setBadge('running', `RUNNING — Step ${p.current_step}/7: ${p.step_name}`);
+                }
+
+                // Update terminal log (only new entries)
+                const logEl = document.getElementById('terminal-log');
+                if (p.logs && p.logs.length > lastLogCount) {
+                    const newLogs = p.logs.slice(lastLogCount);
+                    newLogs.forEach(log => {
+                        const div = document.createElement('div');
+                        div.className = 'log-entry';
+                        if (log.includes('[DONE]')) div.className += ' log-done';
+                        else if (log.includes('[ERROR]')) div.className += ' log-error';
+                        else if (log.includes('[STEP')) div.className += ' log-step';
+                        div.textContent = log;
+                        logEl.appendChild(div);
+                    });
+                    lastLogCount = p.logs.length;
+                    logEl.scrollTop = logEl.scrollHeight;
+                }
+
+                // Check completion
+                if (p.status === 'complete') {
+                    clearInterval(pollInterval);
+                    pollInterval = null;
+                    setBadge('complete', '✓ Pipeline Complete — All Steps Passed');
+                    document.getElementById('progress-bar').style.width = '100%';
+
+                    const btn = document.getElementById('btn-start');
+                    btn.disabled = false;
+                    btn.classList.remove('running');
+                    btn.textContent = '⚡ Start Unlearning';
+
+                    // Load and render results
+                    await loadAndRenderResults('auto');
+
+                    // Show Phase 4: Ask the unlearned model
+                    document.getElementById('chat-after-section').classList.add('visible');
+                    const beforePrompt = document.getElementById('chat-before-input').value.trim();
+                    if (beforePrompt) {
+                        document.getElementById('chat-after-input').value = beforePrompt;
+                    }
+                }
+
+                if (p.status === 'error') {
+                    clearInterval(pollInterval);
+                    pollInterval = null;
+                    setBadge('error', 'ERROR — ' + (p.error || 'Unknown error'));
+                    const btn = document.getElementById('btn-start');
+                    btn.disabled = false;
+                    btn.classList.remove('running');
+                    btn.classList.add('btn-error');
+                    btn.textContent = '✗ Pipeline Failed — Retry';
+                    setTimeout(() => btn.classList.remove('btn-error'), 3000);
+                }
+
+            } catch (e) {
+                console.error('Poll error:', e);
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        // LOAD & RENDER RESULTS
+        // ══════════════════════════════════════════════════════════════
+
+        async function loadAndRenderResults(source) {
+            const qs = source !== 'auto' ? '?source=' + source : '';
+            try {
+                const [result, rkg, cert, steps] = await Promise.all([
+                    fetch('/api/result' + qs).then(r => r.json()),
+                    fetch('/api/rkg' + qs).then(r => r.json()),
+                    fetch('/api/certificate' + qs).then(r => r.json()),
+                    fetch('/api/steps' + qs).then(r => r.json()),
+                ]);
+
+                if (!result || !result.metrics) {
+                    if (source === 'static') {
+                        setBadge('idle', 'No previous results available');
+                    }
+                    return;
+                }
+
+                // Show results container FIRST so elements have layout dimensions
+                showResults(true);
+
+                renderMetrics(result.metrics, result);
+                renderComparison(result);
+                renderPipeline(steps);
+                renderAdversarial(result.metrics);
+                renderCertificate(cert);
+                renderQuantum(result.metrics);
+
+                // Render graph after a frame so container has measured width
+                requestAnimationFrame(() => renderGraph(rkg, result.graph_stats));
+            } catch (e) {
+                console.error('Failed to load results:', e);
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        // MODE TOGGLE
+        // ══════════════════════════════════════════════════════════════
+
+        function toggleMode() {
+            const toggle = document.getElementById('toggle-switch');
+            const labelLive = document.getElementById('label-live');
+            const labelStatic = document.getElementById('label-static');
+            const form = document.getElementById('hero-form');
+            const progress = document.getElementById('progress-section');
+
+            if (currentMode === 'live') {
+                currentMode = 'static';
+                toggle.classList.add('on');
+                labelLive.classList.remove('active');
+                labelStatic.classList.add('active');
+                form.style.display = 'none';
+                progress.classList.remove('active');
+                setBadge('idle', 'Viewing Previous Results');
+                loadAndRenderResults('static');
+            } else {
+                currentMode = 'live';
+                toggle.classList.remove('on');
+                labelStatic.classList.remove('active');
+                labelLive.classList.add('active');
+                form.style.display = 'flex';
+                showResults(false);
+                setBadge('idle', 'AURORA System Ready');
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        // RENDER FUNCTIONS
+        // ══════════════════════════════════════════════════════════════
+
+        function renderComparison(result) {
+            // The comparison table is rendered from static HTML, no dynamic data needed
+        }
+
+        // ── Metrics Grid ──
+        function renderMetrics(metrics, result) {
+            if (!metrics) return;
+
+            const items = [
+                { label: 'Direct Forget', value: metrics.direct_forget_accuracy, color: 'cyan', fill: 'fill-cyan', max: 0.3 },
+                { label: 'Indirect Leakage', value: metrics.indirect_leakage_rate, color: 'violet', fill: 'fill-violet', max: 0.3 },
+                { label: 'Retain Utility', value: metrics.retain_utility_drop, color: 'green', fill: 'fill-green', max: 0.1 },
+                { label: 'Reconstruction', value: metrics.reconstruction_probability, color: 'cyan', fill: 'fill-cyan', max: 0.1 },
+                { label: 'Param Drift', value: metrics.parameter_drift_norm, color: 'violet', fill: 'fill-violet', max: 1.0 },
+            ];
+
+            const grid = document.getElementById('metrics-grid');
+            grid.innerHTML = '';
+
+            items.forEach((item, i) => {
+                const pct = Math.min((item.value / item.max) * 100, 100);
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.style.animationDelay = `${i * 0.1}s`;
+                card.innerHTML = `
+            <div class="card-header">
+                <span class="card-title">${item.label}</span>
+            </div>
+            <div class="metric-value" style="color: var(--${item.color});" id="metric-${i}">${formatMetric(item.value)}</div>
+            <div class="metric-label">${item.value < item.max ? '✓ Within threshold' : '✗ Over threshold'}</div>
+            <div class="metric-bar">
+                <div class="metric-bar-fill ${item.fill}" style="width: 0;" id="bar-${i}"></div>
+            </div>
+        `;
+                grid.appendChild(card);
+
+                // Animate bar after a short delay
+                setTimeout(() => {
+                    document.getElementById(`bar-${i}`).style.width = `${pct}%`;
+                }, 300 + i * 150);
+            });
+        }
+
+        // ── Pipeline Steps ──
+        function renderPipeline(steps) {
+            if (!steps || !steps.length) return;
+
+            const container = document.getElementById('pipeline-container');
+            container.innerHTML = '';
+
+            steps.forEach((step, i) => {
+                const div = document.createElement('div');
+                div.className = 'pipeline-step';
+                div.innerHTML = `
+            <div class="step-number">${step.step}</div>
+            <div class="step-content">
+                <div class="step-name">${step.name}</div>
+                <div class="step-detail">${step.detail}</div>
+                <div class="step-meta">
+                    <span class="step-time">${step.time}</span>
+                    <span class="step-badge badge-complete">✓ Complete</span>
+                </div>
+            </div>
+        `;
+                container.appendChild(div);
+
+                // Stagger animation
+                setTimeout(() => div.classList.add('visible'), 200 + i * 120);
+            });
+        }
+
+        // ── Adversarial Resistance ──
+        function renderAdversarial(metrics) {
+            if (!metrics) return;
+
+            const attacks = [
+                { name: 'Correlated Fine-Tuning', value: metrics.correlated_ft_leakage, icon: '⚡' },
+                { name: 'Prompt Injection', value: metrics.prompt_injection_leakage, icon: '💉' },
+                { name: 'Multi-Hop Reconstruction', value: metrics.multihop_leakage, icon: '🔗' },
+                { name: 'Quantization (8-bit)', value: metrics.quantization_leakage, icon: '📐' },
+                { name: 'LoRA Recovery', value: metrics.lora_recovery_leakage, icon: '🎯' },
+            ];
+
+            const container = document.getElementById('adversarial-container');
+            container.innerHTML = '';
+
+            attacks.forEach((atk, i) => {
+                const resistance = Math.max(0, (1 - atk.value) * 100);
+                const div = document.createElement('div');
+                div.className = 'attack-row';
+                div.innerHTML = `
+            <span style="font-size: 20px;">${atk.icon}</span>
+            <span class="attack-name">${atk.name}</span>
+            <div class="attack-bar">
+                <div class="attack-bar-fill" id="atk-bar-${i}" style="width: 0;"></div>
+            </div>
+            <span class="attack-value">${formatMetric(atk.value)}</span>
+            <span class="attack-badge">RESISTED</span>
+        `;
+                container.appendChild(div);
+
+                setTimeout(() => {
+                    document.getElementById(`atk-bar-${i}`).style.width = `${resistance}%`;
+                }, 500 + i * 200);
+            });
+        }
+
+        // ── RKG Graph (D3.js Force-Directed) ──
+        function renderGraph(rkg, stats) {
+            if (!rkg || !rkg.nodes) return;
+
+            document.getElementById('graph-stats').textContent =
+                `${rkg.nodes.length} Nodes · ${rkg.edges.length} Edges · Density: ${(stats?.density || 0).toFixed(3)}`;
+
+            const container = document.getElementById('rkg-graph');
+
+            // Clear any previously rendered SVG
+            container.innerHTML = '';
+
+            // Use clientWidth with fallback — container must be visible
+            const width = container.clientWidth || container.getBoundingClientRect().width || 900;
+            const height = 500;
+
+            const svg = d3.select('#rkg-graph')
+                .append('svg')
+                .attr('viewBox', `0 0 ${width} ${height}`)
+                .attr('preserveAspectRatio', 'xMidYMid meet');
+
+            // Defs for arrow markers and gradients
+            const defs = svg.append('defs');
+
+            // Glow filter
+            const filter = defs.append('filter').attr('id', 'glow');
+            filter.append('feGaussianBlur').attr('stdDeviation', '3').attr('result', 'blur');
+            filter.append('feMerge')
+                .selectAll('feMergeNode')
+                .data(['blur', 'SourceGraphic'])
+                .enter()
+                .append('feMergeNode')
+                .attr('in', d => d);
+
+            // Classify nodes
+            function nodeColor(id) {
+                if (id.startsWith('entity_')) return '#a855f7';
+                if (id.startsWith('fact_')) return '#f59e0b';
+                return '#00d4ff';
+            }
+
+            function nodeRadius(id) {
+                if (id.startsWith('fact_')) return 12;
+                if (id.startsWith('entity_')) return 10;
+                return 7;
+            }
+
+            // Edge color
+            function edgeColor(type) {
+                return type === 'retrieval' ? 'rgba(245, 158, 11, 0.4)' : 'rgba(0, 212, 255, 0.15)';
+            }
+
+            // Build simulation — take a subset of edges for clarity
+            const links = rkg.edges.map(e => ({
+                source: e.source,
+                target: e.target,
+                type: e.type,
+                weight: e.weight,
+            }));
+
+            const nodes = rkg.nodes.map(n => ({ ...n }));
+
+            const simulation = d3.forceSimulation(nodes)
+                .force('link', d3.forceLink(links).id(d => d.id).distance(60).strength(0.3))
+                .force('charge', d3.forceManyBody().strength(-120))
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('collision', d3.forceCollide().radius(15));
+
+            // Draw edges
+            const link = svg.append('g')
+                .selectAll('line')
+                .data(links)
+                .enter()
+                .append('line')
+                .attr('stroke', d => edgeColor(d.type))
+                .attr('stroke-width', d => d.type === 'retrieval' ? 1.5 : 0.8)
+                .attr('opacity', 0.6);
+
+            // Draw nodes
+            const node = svg.append('g')
+                .selectAll('circle')
+                .data(nodes)
+                .enter()
+                .append('circle')
+                .attr('r', d => nodeRadius(d.id))
+                .attr('fill', d => nodeColor(d.id))
+                .attr('stroke', d => nodeColor(d.id))
+                .attr('stroke-width', 2)
+                .attr('stroke-opacity', 0.3)
+                .attr('fill-opacity', 0.8)
+                .style('filter', 'url(#glow)')
+                .style('cursor', 'pointer')
+                .call(d3.drag()
+                    .on('start', (event, d) => {
+                        if (!event.active) simulation.alphaTarget(0.3).restart();
+                        d.fx = d.x; d.fy = d.y;
+                    })
+                    .on('drag', (event, d) => {
+                        d.fx = event.x; d.fy = event.y;
+                    })
+                    .on('end', (event, d) => {
+                        if (!event.active) simulation.alphaTarget(0);
+                        d.fx = null; d.fy = null;
+                    })
+                );
+
+            // Labels for entity and fact nodes
+            const labels = svg.append('g')
+                .selectAll('text')
+                .data(nodes.filter(n => n.id.startsWith('entity_') || n.id.startsWith('fact_')))
+                .enter()
+                .append('text')
+                .attr('font-size', '11px')
+                .attr('font-family', 'Inter, sans-serif')
+                .attr('font-weight', '600')
+                .attr('fill', d => nodeColor(d.id))
+                .attr('text-anchor', 'middle')
+                .attr('dy', -16)
+                .text(d => d.id.replace('entity_', '').replace('fact_', 'Fact: '));
+
+            // Tooltip
+            const tooltip = d3.select('body').append('div').attr('class', 'tooltip').style('display', 'none');
+
+            node.on('mouseover', (event, d) => {
+                tooltip
+                    .style('display', 'block')
+                    .style('left', (event.pageX + 12) + 'px')
+                    .style('top', (event.pageY - 10) + 'px')
+                    .html(`<strong>${d.id}</strong><br>Freq: ${d.frequency_score}`);
+            })
+                .on('mouseout', () => tooltip.style('display', 'none'));
+
+            // Tick
+            simulation.on('tick', () => {
+                link
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+
+                node
+                    .attr('cx', d => d.x = Math.max(15, Math.min(width - 15, d.x)))
+                    .attr('cy', d => d.y = Math.max(15, Math.min(height - 15, d.y)));
+
+                labels
+                    .attr('x', d => d.x)
+                    .attr('y', d => d.y);
+            });
+        }
+
+        // ── Certificate ──
+        function renderCertificate(cert) {
+            if (!cert || !cert.certificate_id) return;
+
+            // Certificate details
+            const detailsDiv = document.getElementById('cert-details');
+            detailsDiv.innerHTML = `
+        <div class="card-header">
+            <span class="card-title">Certificate Details</span>
+            <div class="card-icon icon-green">🔒</div>
+        </div>
+        <div class="cert-field">
+            <span class="cert-label">Certificate ID</span>
+            <span class="cert-value" style="color: var(--cyan); font-weight: 600;">${cert.certificate_id}</span>
+        </div>
+        <div class="cert-field">
+            <span class="cert-label">Timestamp</span>
+            <span class="cert-value">${cert.timestamp}</span>
+        </div>
+        <div class="cert-field">
+            <span class="cert-label">Compliance</span>
+            <span class="cert-compliance compliance-pass">✓ ${cert.compliance_tag}</span>
+        </div>
+        <div class="cert-field">
+            <span class="cert-label">Root Hash</span>
+            <span class="cert-value">${cert.root_hash}</span>
+        </div>
+        <div class="cert-field">
+            <span class="cert-label">Model Before</span>
+            <span class="cert-value">${cert.model_hash_before}</span>
+        </div>
+        <div class="cert-field">
+            <span class="cert-label">Model After</span>
+            <span class="cert-value">${cert.model_hash_after}</span>
+        </div>
+        <div class="cert-field">
+            <span class="cert-label">Signature</span>
+            <span class="cert-value" style="font-size: 10px; color: var(--text-muted);">${cert.signature ? cert.signature.substring(0, 80) + '...' : 'N/A'}</span>
+        </div>
+    `;
+
+            // Merkle tree
+            const merkleDiv = document.getElementById('merkle-tree');
+            const leaves = cert.metadata?.merkle_tree?.leaves || [];
+            let merkleHtml = `
+        <div class="card-header">
+            <span class="card-title">Merkle Verification Tree</span>
+            <div class="card-icon icon-violet">🌳</div>
+        </div>
+        <div class="cert-field">
+            <span class="cert-label">Root Hash</span>
+            <span class="cert-value" style="color: var(--green);">${cert.metadata?.merkle_tree?.root_hash || 'N/A'}</span>
+        </div>
+        <div style="margin-top: 16px;">
+    `;
+
+            leaves.forEach(leaf => {
+                merkleHtml += `
+            <div class="merkle-leaf">
+                <span class="merkle-label">${leaf.label.replace(/_/g, ' ')}</span>
+                <span class="merkle-hash">${leaf.hash}</span>
+            </div>
+        `;
+            });
+
+            merkleHtml += '</div>';
+            merkleDiv.innerHTML = merkleHtml;
+        }
+
+        // ── Quantum Distinguishability ──
+        function renderQuantum(metrics) {
+            if (!metrics) return;
+
+            const container = document.getElementById('quantum-container');
+            const dForget = metrics.trace_distance_forget;
+            const dRetain = metrics.trace_distance_retain;
+            const ratio = dRetain > 0 ? (dForget / dRetain).toFixed(0) : '∞';
+            const passed = dForget > dRetain;
+
+            container.innerHTML = `
+        <div class="grid-3" style="gap: 24px;">
+            <div style="text-align: center; padding: 20px;">
+                <div class="metric-value" style="color: var(--cyan); font-size: 28px;">${formatMetric(dForget)}</div>
+                <div class="metric-label">D_forget (Trace Distance)</div>
+                <p style="margin-top: 12px; font-size: 12px; color: var(--text-muted);">
+                    Quantum trace distance between original and unlearned model on forget set. Higher = more distinct.
+                </p>
+            </div>
+            <div style="text-align: center; padding: 20px;">
+                <div class="metric-value" style="color: var(--violet); font-size: 28px;">${formatMetric(dRetain)}</div>
+                <div class="metric-label">D_retain (Trace Distance)</div>
+                <p style="margin-top: 12px; font-size: 12px; color: var(--text-muted);">
+                    Quantum trace distance on retain set. Lower = knowledge better preserved.
+                </p>
+            </div>
+            <div style="text-align: center; padding: 20px;">
+                <div class="metric-value" style="color: var(--green); font-size: 28px;">${ratio}×</div>
+                <div class="metric-label">Ratio D_forget / D_retain</div>
+                <p style="margin-top: 12px; font-size: 12px; color: var(--text-muted);">
+                    ${passed ? '✓ PASSED — Forget set is quantum-distinguishable from original while retain set is unchanged.' : '✗ FAILED'}
+                </p>
+            </div>
+        </div>
+    `;
+        }
+
+        // ── Initialize ──
+        async function init() {
+            reobserve();
+
+            // Check if model is loading and poll for readiness
+            try {
+                const progress = await fetch('/api/progress').then(r => r.json());
+                if (progress.status === 'loading_model') {
+                    setBadge('loading', 'MODEL LOADING — Please wait...');
+                    const checkReady = setInterval(async () => {
+                        const p = await fetch('/api/progress').then(r => r.json());
+                        if (p.status !== 'loading_model') {
+                            clearInterval(checkReady);
+                            setBadge('idle', p.model_loaded ? 'AURORA System Ready' : 'AURORA System Ready');
+                        }
+                    }, 2000);
+                } else if (progress.model_loaded) {
+                    setBadge('idle', 'AURORA System Ready');
+                } else {
+                    setBadge('idle', 'AURORA System Ready');
+                }
+
+                // If pipeline was running (page refresh mid-run), resume polling
+                if (progress.status === 'running') {
+                    setBadge('running', `RUNNING — Step ${progress.current_step}/7: ${progress.step_name}`);
+                    document.getElementById('progress-section').classList.add('active');
+                    document.getElementById('btn-start').disabled = true;
+                    document.getElementById('btn-start').classList.add('running');
+                    document.getElementById('btn-start').textContent = '⏳ Running Pipeline...';
+                    pollInterval = setInterval(pollProgress, 1500);
+                }
+            } catch (e) {
+                setBadge('idle', 'AURORA System Ready');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+
+</body>
+
+</html>

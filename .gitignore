@@ -1,0 +1,100 @@
+# ═══════════════════════════════════════════════════════════
+#  AURORA — .gitignore
+# ═══════════════════════════════════════════════════════════
+
+# ── Python ────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+
+# ── Distribution / Packaging ─────────────────────────────
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+sdist/
+wheels/
+*.whl
+
+# ── Virtual Environments ─────────────────────────────────
+.env
+.venv
+env/
+venv/
+ENV/
+
+# ── IDE / Editor ─────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# ── Testing / Coverage ───────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# ── Type Checking / Linting ──────────────────────────────
+.mypy_cache/
+.ruff_cache/
+.dmypy.json
+
+# ── Jupyter Notebooks ────────────────────────────────────
+.ipynb_checkpoints/
+
+# ── Logs ─────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Model Files & Checkpoints ────────────────────────────
+models/
+checkpoints/
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.onnx
+*.gguf
+
+# ── HuggingFace Cache ────────────────────────────────────
+.cache/
+huggingface/
+
+# ── Cryptographic Keys & Certificates ────────────────────
+certificates/
+*.pem
+*.key
+*.crt
+*.p12
+
+# ── Demo Storage (runtime artifacts) ─────────────────────
+demo_storage/
+demo_certificates/
+
+# ── OS Files ─────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# ── Docker ───────────────────────────────────────────────
+docker-compose.override.yml
+.docker/
+
+# ── Misc ─────────────────────────────────────────────────
+*.bak
+*.tmp
+*.temp
+*.orig
+.gemini/
